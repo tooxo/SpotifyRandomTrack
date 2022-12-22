@@ -1,0 +1,96 @@
+.main-container {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    height: 100vh;
+    width: 100vw;
+}
+
+body {
+    margin: 0;
+}
+
+.music-container {
+    width: 400px;
+}
+
+.music-art {
+    width: 400px;
+    height: 400px;
+
+    position: absolute;
+}
+
+.hover_over {
+    width: 400px;
+    height: 400px;
+
+    position: absolute;
+
+    background-color: rgba(0, 0, 0, .5);
+    z-index: 2;
+
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.song-art-container {
+    width: 100%;
+    aspect-ratio: 1/1;
+}
+
+#artists {
+    font-size: 1rem;
+}
+
+#song_name {
+    font-size: 1.2rem;
+    max-lines: 3;
+    overflow-style: marquee-line;
+}
+
+.mini-container {
+    display: flex;
+    align-items: center;
+}
+
+#dice {
+    margin-left: 20px;
+    height: 50px;
+    width: 50px;
+}
+
+.drop-item {
+    margin: 0;
+}
+
+.drop-container {
+    background-color: white;
+    padding: 5px;
+    z-index: 3;
+    position: absolute;
+}
+
+#year_to, #year_from {
+    width: 50px;
+}
+
+#play_pause {
+    height: 50px;
+    width: 50px;
+
+    margin: 7px;
+    padding: 7px;
+
+    object-fit: contain;
+
+    filter: invert();
+    font-weight: 500;
+}
+
+.drop-item:hover {
+    font-weight: 900;
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="/static/index.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="main-container">
+    <div class="">
+        <div class="mini-container">
+            <div style="width: 50px; margin-left: 20px"></div>
+            <div class="music-container">
+                <div class="mini-container">
+                    <div>
+                        <input id="genre_search" value="" placeholder="Pop, Rock, ...">
+                        <div class="drop-container" id="drop-container" hidden="hidden">
+                        </div>
+                    </div>
+                    <div>
+                        <input type="number" id="year_from" pattern="[1,2][9,0]\d\d" value="1900">
+                        <span style="padding: 0 2px"> - </span>
+                        <input type="number" id="year_to" pattern="[1,2][9,0]\d\d" value="2022">
+                    </div>
+                </div>
+
+                <div id="song_art_container" class="song-art-container" style="margin-top: 1rem;">
+                    <div id="hover_over" class="hover_over">
+                        <img id="play_pause" src="/static/play-button.png">
+                    </div>
+                    <img src="" id="song_art" class="music-art" width="100%">
+                </div>
+                <p>
+                    <span id="artists"></span><br>
+                    <a id="song_url" target="_blank"><span id="song_name"></span></a>
+                </p>
+
+                <audio id="audio"></audio>
+            </div>
+            <a onclick="dice()">
+                <img id="dice" src="/static/dice.png" alt="dice">
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+
+<script>
+    const genre_list = [];
+</script>
+<script src="/static/functionality.js"></script>
+
+</html>

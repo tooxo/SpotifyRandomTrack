@@ -1,0 +1,5 @@
+git+https://github.com/tooxo/api-commons.git
+fastapi
+hypercorn
+aiofiles
+aiohttp
