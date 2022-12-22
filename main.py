@@ -22,7 +22,7 @@ routes = [
 ]
 
 app = fastapi.FastAPI(
-    routes=routes
+    routes=routes,
 )
 spotify = api_commons.spotify.SpotifyApi(
     client_id=os.environ["SPOTIFY_API_ID"],
@@ -133,8 +133,6 @@ async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900"
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    # const genre_list = [];
-
     async with aiofiles.open("static/index.html", "r") as file:
         content = await file.read()
 
