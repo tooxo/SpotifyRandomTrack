@@ -3,4 +3,3 @@ fastapi
 hypercorn
 aiofiles
 aiohttp
-gunicorn
