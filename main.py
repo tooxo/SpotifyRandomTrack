@@ -148,6 +148,7 @@ async def index():
         return content.replace("const genre_list = [];", f"const genre_list = [{','.join(genres_string)}];")
 
 
-asyncio.run(
-    hypercorn.asyncio.serve(app, hypercorn.config.Config())
-)
+if __name__ == '__main__':
+    asyncio.run(
+        hypercorn.asyncio.serve(app, hypercorn.config.Config())
+    )
