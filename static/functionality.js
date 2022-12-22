@@ -35,8 +35,7 @@ let random_songs = [];
 let selected_genre = 'pop';
 
 function get_selected_genres() {
-    if (genre_list.includes(selected_genre))
-        return selected_genre;
+    if (genre_list.includes(selected_genre)) return selected_genre;
     return 'pop';
 }
 
@@ -61,9 +60,7 @@ async function fill_up_random_songs() {
         return;
     }
 
-    let response = await fetch(
-        "/request_songs?genre=" + get_selected_genres() + "&no=5&start_year=" + get_start_year() + "&end_year=" + get_end_year(),
-    )
+    let response = await fetch("/request_songs?genre=" + get_selected_genres() + "&no=5&start_year=" + get_start_year() + "&end_year=" + get_end_year(),)
 
     if (response.ok) {
         let json_parsed = await response.json();
@@ -100,15 +97,11 @@ function dice() {
     play_pause.src = "/static/play-button.png";
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
 
-    get_random_song().then(
-        value => display_song(value)
-    );
+    get_random_song().then(value => display_song(value));
 }
 
 function filterDropdown() {
-    return genre_list.filter(
-        value => value.includes(input.value.trim())
-    ).filter((_, index) => index < 20);
+    return genre_list.filter(value => value.includes(input.value.trim())).filter((_, index) => index < 20);
 }
 
 function clickDropdown(genre) {
@@ -134,19 +127,14 @@ function updateDropdown() {
     }
 
     for (let name of filterDropdown()) {
-        drop.appendChild(
-            createDropdownChild(name)
-        );
+        drop.appendChild(createDropdownChild(name));
     }
 }
 
-input.addEventListener(
-    "focusin",
-    ev => {
-        updateDropdown();
-        drop.hidden = false;
-    }
-);
+input.addEventListener("focusin", ev => {
+    updateDropdown();
+    drop.hidden = false;
+});
 
 
 window.onclick = function (event) {
@@ -156,49 +144,31 @@ window.onclick = function (event) {
 }
 
 
-input.addEventListener(
-    "keyup",
-    ev => updateDropdown()
-)
+input.addEventListener("keyup", ev => updateDropdown())
 
-play_pause.addEventListener(
-    "click",
-    ev => {
-        if (!audio.paused) {
-            audio.pause();
-        } else {
-            audio.play();
-        }
+play_pause.addEventListener("click", ev => {
+    if (!audio.paused) {
+        audio.pause();
+    } else {
+        audio.play();
     }
-);
+});
 
-audio.addEventListener(
-    "play",
-    ev => {
-        play_pause.src = "/static/pause-button.png";
-    }
-);
+audio.addEventListener("play", ev => {
+    play_pause.src = "/static/pause-button.png";
+});
 
-audio.addEventListener(
-    "pause",
-    ev => {
-        play_pause.src = "/static/play-button.png";
-    }
-);
+audio.addEventListener("pause", ev => {
+    play_pause.src = "/static/play-button.png";
+});
 
-song_art_container.addEventListener(
-    "mouseenter",
-    ev => {
-        hover_over.style.display = "flex";
-    }
-);
+song_art_container.addEventListener("mouseenter", ev => {
+    hover_over.style.display = "flex";
+});
 
-song_art_container.addEventListener(
-    "mouseleave",
-    ev => {
-        hover_over.style.display = "none";
-    }
-);
+song_art_container.addEventListener("mouseleave", ev => {
+    hover_over.style.display = "none";
+});
 
 function checkYearInput() {
     if (start_year.value.match(start_year.pattern)) {
@@ -219,19 +189,105 @@ function checkYearInput() {
     }
 }
 
-start_year.addEventListener(
-    "focusout",
-    ev => {
-        checkYearInput();
-    }
-);
+start_year.addEventListener("focusout", ev => {
+    checkYearInput();
+});
 
-end_year.addEventListener(
-    "focusout",
-    ev => {
-        checkYearInput();
-    }
-);
+end_year.addEventListener("focusout", ev => {
+    checkYearInput();
+});
+const redirect_url = "https://spotify-random-track.onrender.com/";
 
+async function authorizeSpotify() {
+    const client_id = "ed8a00aa20d54561942f418c30cf6d72";
+    const scope = "playlist-modify-private playlist-modify-public";
+    // const redirect_url = window.location.href;
+    const state = Date.now().toFixed();
+
+    window.location = "https://accounts.spotify.com/authorize?response_type=code" + "&client_id=" + client_id + "&scope=" + scope + "&redirect_uri=" + redirect_url + "&state=" + state;
+}
+
+
+const spotify_auth = document.getElementById("spotify-auth");
+const spotify_create_playlist = document.getElementById("spotify-create-playlist");
+const spotify_playlist_progress = document.getElementById("create-playlist-progress");
+
+async function createPlaylist() {
+    const try_num = 50;
+
+    let response = await fetch(
+        "/spotify_auth?code=" + params.code + "&redirect_uri=" + redirect_url
+    );
+    let code = await response.text()
+    console.log(code)
+
+    let profile = await fetch(
+        "https://api.spotify.com/v1/me",
+        {
+            headers: {
+                Authorization: "Bearer " + code
+            }
+        }
+    )
+
+    let json = await profile.json();
+    let userId = json["id"];
+
+    let playlistCreate = await fetch(
+        "https://api.spotify.com/v1/users/" + userId + "/playlists",
+        {
+            method: "POST",
+            headers: {
+                Authorization: "Bearer " + code
+            },
+            body: JSON.stringify(
+                {
+                    "name": selected_genre + " - random playlist",
+                    "public": false,
+                    "collaborative": false,
+                    "description": ""
+                }
+            )
+        }
+    );
+    let plcJson = await playlistCreate.json();
+
+    let added = 0;
+    while (try_num > added) {
+        let r = await fetch("/request_songs?genre=" + get_selected_genres() + "&no=5&start_year=" + get_start_year() + "&end_year=" + get_end_year());
+
+        let arr = await r.json();
+        arr = arr.map(
+            value => "spotify:track:" + value.id
+        );
+
+        await fetch(
+            "https://api.spotify.com/v1/playlists/" + plcJson["id"] + "/tracks",
+            {
+                method: "POST",
+                headers: {
+                    Authorization: "Bearer " + code
+                },
+                body: JSON.stringify(
+                    {
+                        uris: arr
+                    }
+                )
+            }
+        );
+        added += 5;
+
+        spotify_playlist_progress.innerText = added + " / " + try_num;
+    }
+}
+
+const params = new Proxy(new URLSearchParams(window.location.search), {
+    get: (searchParams, prop) => searchParams.get(prop),
+});
+
+if (params.code !== null) {
+    spotify_auth.hidden = true;
+    spotify_create_playlist.hidden = false;
+}
 
 dice();

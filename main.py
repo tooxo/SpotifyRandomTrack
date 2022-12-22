@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import datetime
 import json
 import os
@@ -51,6 +52,29 @@ async def test(pop_cap: int = 100):
                     )
                 )
             )
+
+
+@app.get("/spotify_auth", response_class=HTMLResponse)
+async def spotify_auth(code: str, redirect_uri: str):
+    encoded = base64.b64encode(
+        (os.environ['SPOTIFY_API_ID'] + ":" + os.environ['SPOTIFY_API_SECRET']).encode("ascii")).decode("ascii")
+
+    async with aiohttp.ClientSession(
+            headers={
+                "Authorization": f"Basic {encoded}"
+            }
+    ) as s:
+        async with s.post(
+                "https://accounts.spotify.com/api/token",
+                data={
+                    "code": code,
+                    "redirect_uri": redirect_uri,
+                    "grant_type": "authorization_code"
+                }
+        ) as req:
+            js = await req.json()
+            print(js)
+            return js["access_token"]
 
 
 @app.get("/request_songs")
@@ -125,6 +149,7 @@ async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900"
                 "art": x["album"]["images"][0]["url"],
                 "preview_url": x["preview_url"],
                 "url": x["external_urls"]["spotify"],
+                "id": x["id"]
             },
             songs
         )

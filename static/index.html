@@ -36,6 +36,11 @@
                     <a id="song_url" target="_blank"><span id="song_name"></span></a>
                 </p>
 
+                <button id="spotify-auth" onclick="authorizeSpotify()">Auth</button>
+                <div>
+                    <button id="spotify-create-playlist" hidden="hidden" onclick="createPlaylist()">Create Playlist</button>
+                    <p id="create-playlist-progress"> 0 / 0 </p>
+                </div>
                 <audio id="audio"></audio>
             </div>
             <a onclick="dice()">
@@ -65,6 +70,5 @@
 
     gtag('config', 'UA-127069816-1');
 </script>
-
 
 </html>
