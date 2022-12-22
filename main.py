@@ -81,7 +81,7 @@ async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900"
                 query += " year:" + year
 
             offset = random.randint(0, 999)
-            print(f"{query=}, {offset=}")
+            # print(f"{query=}, {offset=}")
 
             async with session.get(
                     url=f"https://api.spotify.com/v1/search?type=track&include_external=audio&q="
