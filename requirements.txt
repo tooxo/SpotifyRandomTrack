@@ -1,6 +1,6 @@
 git+https://github.com/tooxo/api-commons.git
 fastapi
-hypercorn
+# hypercorn
 aiofiles
 aiohttp
 jinja2
