@@ -3,3 +3,5 @@ fastapi
 hypercorn
 aiofiles
 aiohttp
+jinja2
+gunicorn

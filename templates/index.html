@@ -14,14 +14,14 @@
             <div class="music-container">
                 <div class="mini-container">
                     <div>
-                        <input id="genre_search" value="" placeholder="Pop, Rock, ...">
+                        <input id="genre_search" value="{{ selected_genre }}" placeholder="Pop, Rock, ...">
                         <div class="drop-container" id="drop-container" hidden="hidden">
                         </div>
                     </div>
                     <div>
-                        <input type="number" id="year_from" pattern="[1,2][9,0]\d\d" value="1900">
+                        <input type="number" id="year_from" pattern="[1,2][9,0]\d\d" value="{{ start_year }}">
                         <span style="padding: 0 2px"> - </span>
-                        <input type="number" id="year_to" pattern="[1,2][9,0]\d\d" value="2022">
+                        <input type="number" id="year_to" pattern="[1,2][9,0]\d\d" value="{{ end_year }}">
                     </div>
                 </div>
 
@@ -38,7 +38,8 @@
 
                 <button id="spotify-auth" onclick="authorizeSpotify()">Auth</button>
                 <div>
-                    <button id="spotify-create-playlist" hidden="hidden" onclick="createPlaylist()">Create Playlist</button>
+                    <button id="spotify-create-playlist" hidden="hidden" onclick="createPlaylist()">Create Playlist
+                    </button>
                     <a target="_blank" id="create-playlist-progress"> 0 / 0 </a>
                 </div>
                 <audio id="audio"></audio>
@@ -53,7 +54,9 @@
 </body>
 
 <script>
-    const genre_list = [];
+    const genre_list = [{{ GENRE_LIST | safe }}];
+    let selected_genre = '{{ selected_genre }}';
+
 </script>
 <script src="/static/functionality.js"></script>
 

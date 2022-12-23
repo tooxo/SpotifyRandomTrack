@@ -14,6 +14,8 @@ import hypercorn.asyncio
 from fastapi.responses import HTMLResponse
 from fastapi.routing import Mount
 from fastapi.staticfiles import StaticFiles
+from starlette.requests import Request
+from starlette.templating import Jinja2Templates
 
 routes = [
     Mount(
@@ -21,6 +23,8 @@ routes = [
         app=StaticFiles(directory="static", html=False),
     )
 ]
+
+templates = Jinja2Templates(directory="templates")
 
 app = fastapi.FastAPI(
     routes=routes,
@@ -31,7 +35,12 @@ spotify = api_commons.spotify.SpotifyApi(
 )
 
 with open("genre_list.txt", "r") as f:
-    all_genres = f.readlines()
+    all_genres = list(
+        map(
+            lambda x: x.strip(),
+            f.readlines()
+        )
+    )
 
 
 @app.get("/rec")
@@ -127,7 +136,6 @@ async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900"
                             url=f"https://api.spotify.com/v1/search?type=track&include_external=audio&q="
                                 f"{urllib.parse.quote(query)}&limit=1&offset={random.randint(0, js['tracks']['total'] - 1)}"
                     ) as s2:
-                        print("offset correction request")
                         if not s2.ok:
                             continue
                         js2 = await s2.json()
@@ -156,19 +164,49 @@ async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900"
     )
 
 
+def int_or_default(string: str, default: int):
+    try:
+        return int(string)
+    except ValueError:
+        return default
+    except TypeError:
+        return default
+
+
 @app.get("/", response_class=HTMLResponse)
-async def index():
-    async with aiofiles.open("static/index.html", "r") as file:
-        content = await file.read()
-
-        genres_string = list(
-            map(
-                lambda x: f'"{x.strip()}"',
-                all_genres
-            )
+async def index(request: Request):
+    genres_string = list(
+        map(
+            lambda x: f'"{x.strip()}"',
+            all_genres
         )
+    )
 
-        return content.replace("const genre_list = [];", f"const genre_list = [{','.join(genres_string)}];")
+    genre = request.query_params.get("genre")
+    if urllib.parse.unquote(genre.lower()) not in all_genres:
+        genre = "pop"
+
+    start_year = int_or_default(request.query_params.get("start_year"), 1900)
+    end_year = int_or_default(request.query_params.get("end_year"), datetime.date.today().year)
+
+    if start_year < 1900:
+        start_year = 1900
+    if end_year > datetime.date.today().year:
+        end_year = datetime.date.today().year
+
+    if start_year > end_year:
+        start_year = 1900
+        end_year = datetime.date.today().year
+
+    return templates.TemplateResponse(
+        "index.html", {
+            "request": request,
+            "GENRE_LIST": ", ".join(genres_string),
+            "selected_genre": genre,
+            "start_year": start_year,
+            "end_year": end_year
+        }
+    )
 
 
 if __name__ == '__main__':

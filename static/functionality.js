@@ -32,7 +32,6 @@ function Mutex() {
 
 let list_lock = new Mutex();
 let random_songs = [];
-let selected_genre = 'pop';
 
 function get_selected_genres() {
     if (genre_list.includes(selected_genre)) return selected_genre;
@@ -100,8 +99,23 @@ function dice() {
     get_random_song().then(value => display_song(value));
 }
 
+Array.prototype.includesAll = function (...args) {
+    return args.every(item => this.includes(item));
+}
+
+function advancedIncludes(pattern, object) {
+    if (object.includes(pattern))
+        return true;
+    if (object.split(" ").includesAll(...pattern.split(" ")))
+        return true;
+    if (object.replace(" ", "").includes(pattern.replace(" ", "")))
+        return true;
+
+    return false;
+}
+
 function filterDropdown() {
-    return genre_list.filter(value => value.includes(input.value.trim())).filter((_, index) => index < 20);
+    return genre_list.filter(value => advancedIncludes(input.value.trim().toLowerCase(), value.trim().toLowerCase())).filter((_, index) => index < 20);
 }
 
 function clickDropdown(genre) {
@@ -196,14 +210,20 @@ start_year.addEventListener("focusout", ev => {
 end_year.addEventListener("focusout", ev => {
     checkYearInput();
 });
-const redirect_url = location.protocol + '//' + location.host + location.pathname;
+
+
+function redirect_uri() {
+    const redirect_url = location.protocol + '//' + location.host + location.pathname;
+
+    return redirect_url + "?genre=" + selected_genre + "&start_year=" + start_year.value + "&end_year=" + end_year.value;
+}
 
 async function authorizeSpotify() {
     const client_id = "ed8a00aa20d54561942f418c30cf6d72";
     const scope = "playlist-modify-private playlist-modify-public";
     const state = Date.now().toFixed();
 
-    window.location = "https://accounts.spotify.com/authorize?response_type=code" + "&client_id=" + client_id + "&scope=" + scope + "&redirect_uri=" + redirect_url + "&state=" + state;
+    window.location = "https://accounts.spotify.com/authorize?response_type=code" + "&client_id=" + client_id + "&scope=" + scope + "&redirect_uri=" + redirect_uri() + "&state=" + state;
 }
 
 
