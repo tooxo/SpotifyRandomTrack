@@ -10,7 +10,8 @@ import aiofiles
 import aiohttp
 import api_commons.spotify
 import fastapi
-import hypercorn.asyncio
+import gunicorn
+import uvicorn
 from fastapi.responses import HTMLResponse
 from fastapi.routing import Mount
 from fastapi.staticfiles import StaticFiles
@@ -182,7 +183,7 @@ async def index(request: Request):
         )
     )
 
-    genre = request.query_params.get("genre")
+    genre = request.query_params.get("genre") or "pop"
     if urllib.parse.unquote(genre.lower()) not in all_genres:
         genre = "pop"
 
@@ -210,6 +211,6 @@ async def index(request: Request):
 
 
 if __name__ == '__main__':
-    asyncio.run(
-        hypercorn.asyncio.serve(app, hypercorn.config.Config())
+    uvicorn.run(
+        "main:app", host="0.0.0.0", port=os.environ.get("PORT") or 8888
     )
