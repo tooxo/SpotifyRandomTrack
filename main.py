@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.routing import Mount
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse
 
 routes = [
     Mount(

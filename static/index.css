@@ -40,6 +40,7 @@ body {
 .song-art-container {
     width: 100%;
     aspect-ratio: 1/1;
+    height: 400px;
 }
 
 #artists {
