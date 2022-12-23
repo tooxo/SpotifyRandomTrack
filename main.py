@@ -6,17 +6,15 @@ import os
 import random
 import urllib.parse
 
-import aiofiles
 import aiohttp
 import api_commons.spotify
 import fastapi
-import gunicorn
 import uvicorn
 from fastapi.responses import HTMLResponse
 from fastapi.routing import Mount
 from fastapi.staticfiles import StaticFiles
-from starlette.requests import Request
-from starlette.templating import Jinja2Templates
+from fastapi.requests import Request
+from fastapi.templating import Jinja2Templates
 
 routes = [
     Mount(
