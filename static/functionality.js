@@ -233,6 +233,9 @@ async function createPlaylist() {
     let json = await profile.json();
     let userId = json["id"];
 
+    let r = (Math.random() + 1).toString(36).substring(7);
+
+
     let playlistCreate = await fetch(
         "https://api.spotify.com/v1/users/" + userId + "/playlists",
         {
@@ -242,7 +245,7 @@ async function createPlaylist() {
             },
             body: JSON.stringify(
                 {
-                    "name": selected_genre + " - random playlist",
+                    "name": selected_genre + " - random playlist (" + r + ")",
                     "public": false,
                     "collaborative": false,
                     "description": ""
