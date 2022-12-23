@@ -215,13 +215,17 @@ end_year.addEventListener("focusout", ev => {
 function redirect_uri() {
     const redirect_url = location.protocol + '//' + location.host + location.pathname;
 
-    return redirect_url + "?genre=" + selected_genre + "&start_year=" + start_year.value + "&end_year=" + end_year.value;
+    return redirect_url;
 }
 
 async function authorizeSpotify() {
     const client_id = "ed8a00aa20d54561942f418c30cf6d72";
     const scope = "playlist-modify-private playlist-modify-public";
     const state = Date.now().toFixed();
+
+    document.cookie = "genre=" + selected_genre + ";"
+    document.cookie = "start_year=" + start_year.value + ";"
+    document.cookie = "end_year=" + end_year.value + ";"
 
     window.location = "https://accounts.spotify.com/authorize?response_type=code" + "&client_id=" + client_id + "&scope=" + scope + "&redirect_uri=" + redirect_uri() + "&state=" + state;
 }

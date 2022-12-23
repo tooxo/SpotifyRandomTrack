@@ -1,4 +1,3 @@
-import asyncio
 import base64
 import datetime
 import json
@@ -10,11 +9,12 @@ import aiohttp
 import api_commons.spotify
 import fastapi
 import uvicorn
+from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.routing import Mount
 from fastapi.staticfiles import StaticFiles
-from fastapi.requests import Request
 from fastapi.templating import Jinja2Templates
+from starlette.responses import RedirectResponse, Response
 
 routes = [
     Mount(
@@ -172,16 +172,36 @@ def int_or_default(string: str, default: int):
         return default
 
 
+genres_string = list(
+    map(
+        lambda x: f'"{x.strip()}"',
+        all_genres
+    )
+)
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    genres_string = list(
-        map(
-            lambda x: f'"{x.strip()}"',
-            all_genres
+    if request.cookies.get("genre") is not None:
+        url = "/?genre=" + request.cookies.get("genre") + "&start_year=" + request.cookies.get(
+            "start_year") + "&end_year=" + request.cookies.get("end_year") + \
+              (
+                  (
+                          "&code=" + request.query_params.get("code")
+                  ) if "code" in request.query_params else ""
+              )
+
+        response = RedirectResponse(
+            url=url,
         )
-    )
+        response.delete_cookie("genre")
+        response.delete_cookie("start_year")
+        response.delete_cookie("end_year")
+
+        return response
 
     genre = request.query_params.get("genre") or "pop"
+
     if urllib.parse.unquote(genre.lower()) not in all_genres:
         genre = "pop"
 
