@@ -5,3 +5,4 @@ aiofiles
 aiohttp
 jinja2
 gunicorn
+uvicorn
