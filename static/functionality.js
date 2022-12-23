@@ -285,11 +285,8 @@ async function createPlaylist() {
     spotify_playlist_progress.innerText = "Click to open playlist";
     spotify_playlist_progress.href = "https://open.spotify.com/playlist/" + plcJson["id"];
 
-    window.location = window.location.host;
-
     spotify_auth.hidden = false;
     spotify_create_playlist.hidden = true;
-
 }
 
 const params = new Proxy(new URLSearchParams(window.location.search), {
