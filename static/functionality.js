@@ -196,12 +196,11 @@ start_year.addEventListener("focusout", ev => {
 end_year.addEventListener("focusout", ev => {
     checkYearInput();
 });
-const redirect_url = "https://spotify-random-track.onrender.com/";
+const redirect_url = window.location.origin;
 
 async function authorizeSpotify() {
     const client_id = "ed8a00aa20d54561942f418c30cf6d72";
     const scope = "playlist-modify-private playlist-modify-public";
-    // const redirect_url = window.location.href;
     const state = Date.now().toFixed();
 
     window.location = "https://accounts.spotify.com/authorize?response_type=code" + "&client_id=" + client_id + "&scope=" + scope + "&redirect_uri=" + redirect_url + "&state=" + state;
@@ -213,6 +212,7 @@ const spotify_create_playlist = document.getElementById("spotify-create-playlist
 const spotify_playlist_progress = document.getElementById("create-playlist-progress");
 
 async function createPlaylist() {
+    spotify_create_playlist.hidden = true;
     const try_num = 50;
 
     let response = await fetch(
