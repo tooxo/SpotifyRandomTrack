@@ -196,7 +196,7 @@ start_year.addEventListener("focusout", ev => {
 end_year.addEventListener("focusout", ev => {
     checkYearInput();
 });
-const redirect_url = window.location.origin;
+const redirect_url = location.protocol + '//' + location.host + location.pathname;
 
 async function authorizeSpotify() {
     const client_id = "ed8a00aa20d54561942f418c30cf6d72";
