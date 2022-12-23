@@ -17,6 +17,9 @@ const play_pause = document.getElementById("play_pause");
 const song_art_container = document.getElementById("song_art_container");
 const hover_over = document.getElementById("hover_over");
 
+const live = document.getElementById("show_live");
+const remix = document.getElementById("show_remix");
+
 function Mutex() {
     let current = Promise.resolve();
     this.lock = () => {
@@ -59,7 +62,7 @@ async function fill_up_random_songs() {
         return;
     }
 
-    let response = await fetch("/request_songs?genre=" + get_selected_genres() + "&no=5&start_year=" + get_start_year() + "&end_year=" + get_end_year(),)
+    let response = await fetch("/request_songs?genre=" + get_selected_genres() + "&no=5&start_year=" + get_start_year() + "&end_year=" + get_end_year() + "&live=" + live.checked + "&remix=" + remix.checked,)
 
     if (response.ok) {
         let json_parsed = await response.json();
@@ -259,7 +262,6 @@ async function createPlaylist() {
 
     let r = (Math.random() + 1).toString(36).substring(7);
 
-
     let playlistCreate = await fetch(
         "https://api.spotify.com/v1/users/" + userId + "/playlists",
         {
@@ -278,6 +280,8 @@ async function createPlaylist() {
         }
     );
     let plcJson = await playlistCreate.json();
+
+    spotify_playlist_progress.hidden = false;
 
     let added = 0;
     while (try_num > added) {

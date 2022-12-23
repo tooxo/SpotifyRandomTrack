@@ -24,6 +24,18 @@
                         <input type="number" id="year_to" pattern="[1,2][9,0]\d\d" value="{{ end_year }}">
                     </div>
                 </div>
+                <div class="mini-container" style="justify-content: space-evenly; margin-top: 16px">
+                    <label for="show_live">
+                        <input type="checkbox" id="show_live" {{ live }}>
+                        Show Live-Songs
+                    </label>
+
+                    <label for="show_remix">
+                        <input type="checkbox" id="show_remix" {{ remix }}>
+                        Show Remixes
+                    </label>
+
+                </div>
 
                 <div id="song_art_container" class="song-art-container" style="margin-top: 1rem;">
                     <div id="hover_over" class="hover_over">
@@ -40,7 +52,7 @@
                 <div>
                     <button id="spotify-create-playlist" hidden="hidden" onclick="createPlaylist()">Create Playlist
                     </button>
-                    <a target="_blank" id="create-playlist-progress"> 0 / 0 </a>
+                    <a target="_blank" id="create-playlist-progress" hidden="hidden"> 0 / 50 </a>
                 </div>
                 <audio id="audio"></audio>
             </div>

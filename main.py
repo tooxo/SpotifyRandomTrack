@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import random
+import re
 import urllib.parse
 
 import aiohttp
@@ -85,9 +86,41 @@ async def spotify_auth(code: str, redirect_uri: str):
             return js["access_token"]
 
 
+def filter_remix(song: dict) -> bool:
+    if "remix" not in song["name"].lower():
+        return True
+    else:
+        print("skip: remix")
+        return False
+
+
+def filter_live(song: dict) -> bool:
+    if "live" not in song["name"].lower():
+        return True
+    else:
+        print("skip: live")
+        return False
+
+
+def song_filter(song: dict) -> bool:
+    if "A State Of Trance (ASOT" in song["name"]:
+        print("skip: a state of trance")
+        return False
+    if song["artists"][0]["name"] == "Anonym" and "Kapitel" in song["name"]:
+        print("skip: anonym kapitel")
+        return False
+    if re.match(r"(Kapitel \d{1,4}(\.\d{1,4})?)", song["name"]) is not None:
+        print(f"skip: generic kapitel; {song['name']}")
+        return False
+    if re.match(r"Part \d{1,4}", song["name"]) is not None and "-" in song["name"]:
+        print(f"skip: generic part; {song['name']}")
+        return False
+    return True
+
+
 @app.get("/request_songs")
 async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900",
-                       end_year: str = str(datetime.date.today().year)):
+                       end_year: str = str(datetime.date.today().year), live: bool = True, remix: bool = True):
     async with aiohttp.ClientSession(headers={
         "Authorization": "Bearer " + (await spotify.get_auth_token_async())
     }) as session:
@@ -103,7 +136,7 @@ async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900"
 
             year = start_year + (f'-{end_year}' if start_year != end_year else '')
 
-            r_chars = [random.choice(alphabet) for _ in range(random.randint(1, 3))]
+            r_chars = [random.choice(alphabet) for _ in range(random.randint(1, 4))]
             query = \
                 f"genre:\"{urllib.parse.unquote(genre)}\" track:\"{'%' if rn > 0 else ''}" \
                 f"{'*'.join(r_chars)}" \
@@ -126,10 +159,13 @@ async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900"
                 js = await s.json()
 
                 if len(js["tracks"]["items"]) > 0:
-                    # track_a = api_commons.spotify.Track.from_api_response(json.dumps(js["tracks"]["items"][0]))
-
-                    songs.append(js["tracks"]["items"][0])
                     ctr = 2
+
+                    if song_filter(js["tracks"]["items"][0]) \
+                            and (remix or filter_remix(js["tracks"]["items"][0])) \
+                            and (live or filter_live(js["tracks"]["items"][0])):
+                        songs.append(js["tracks"]["items"][0])
+
                 elif js["tracks"]["total"] > 0:
                     async with session.get(
                             url=f"https://api.spotify.com/v1/search?type=track&include_external=audio&q="
@@ -139,7 +175,10 @@ async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900"
                             continue
                         js2 = await s2.json()
                         if len(js2["tracks"]["items"]) > 0:
-                            songs.append(js2["tracks"]["items"][0])
+                            if song_filter(js2["tracks"]["items"][0]) \
+                                    and (remix or filter_remix(js2["tracks"]["items"][0])) \
+                                    and (live or filter_live(js2["tracks"]["items"][0])):
+                                songs.append(js2["tracks"]["items"][0])
                             ctr = 2
 
     return list(
@@ -223,7 +262,9 @@ async def index(request: Request):
             "GENRE_LIST": ", ".join(genres_string),
             "selected_genre": genre,
             "start_year": start_year,
-            "end_year": end_year
+            "end_year": end_year,
+            "remix": "checked",
+            "live": "checked"
         }
     )
 
