@@ -41,9 +41,14 @@ body {
 }
 
 .song-art-container {
-    width: 100%;
-    aspect-ratio: 1/1;
+    width: 400px;
     height: 400px;
+}
+
+@supports (aspect-ratio: 1/1) {
+    .song-art-container {
+        aspect-ratio: 1/1;
+    }
 }
 
 #artists {
