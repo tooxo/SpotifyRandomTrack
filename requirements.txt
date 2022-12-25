@@ -4,3 +4,4 @@ aiofiles
 aiohttp
 jinja2
 uvicorn
+asyncio-pool

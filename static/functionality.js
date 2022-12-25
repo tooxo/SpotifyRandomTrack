@@ -2,6 +2,8 @@ const artist_name = document.getElementById("artists");
 const song_name = document.getElementById("song_name");
 
 const art_image = document.getElementById("song_art");
+const art_image_bottom = document.getElementById("song_art_bottom");
+
 const song_url = document.getElementById("song_url");
 
 const input = document.getElementById("genre_search");
@@ -58,31 +60,46 @@ function get_end_year() {
 }
 
 async function fill_up_random_songs() {
+    console.log("started request");
     let promise = await list_lock.lock();
-    if (random_songs.length > 0) {
-        promise();
-        return;
+
+    let parse = null;
+    for (let i = 0; i < 3; i++) {
+        let response = await fetch("/request_songs?genre=" + get_selected_genres() + "&no=5&start_year=" + get_start_year() + "&end_year=" + get_end_year() + "&live=" + live.checked + "&remix=" + remix.checked,)
+
+        if (response.ok && (parse = await response.json()).length !== 0) {
+            console.log("found after " + (i + 1) + " attempt(s)");
+            break;
+        } else {
+            console.log("response.ok=" + response.ok + " i=" + i + " parse.length=" + (parse || []).length);
+        }
+
     }
 
-    let response = await fetch("/request_songs?genre=" + get_selected_genres() + "&no=5&start_year=" + get_start_year() + "&end_year=" + get_end_year() + "&live=" + live.checked + "&remix=" + remix.checked,)
-
-    if (response.ok) {
-        let json_parsed = await response.json();
-
-        random_songs.push(...json_parsed);
+    if (parse !== null) {
+        random_songs.push(...parse);
     }
 
     promise();
 }
 
 async function get_random_song() {
+    console.log(random_songs.length);
     if (random_songs.length === 0) {
         await fill_up_random_songs();
-    } else if (random_songs.length === 1) {
+    } else if (random_songs.length === 2) {
         fill_up_random_songs().then();
     }
 
     return random_songs.pop()
+}
+
+let imagePosition = "top";
+
+DOMTokenList.prototype.removeAll = function (v) {
+    for (let i = 0; i < this.length; i++) {
+        this.remove(v);
+    }
 }
 
 function display_song(song) {
@@ -92,26 +109,49 @@ function display_song(song) {
 
     artist_name.innerText = artists.join(", ");
     song_name.innerText = song_n;
-    art_image.src = art;
+
+    if (imagePosition === "top") {
+        art_image_bottom.src = art;
+
+        art_image.classList.removeAll("opacity-hundred");
+        art_image_bottom.classList.add("opacity-hundred");
+
+        imagePosition = "bottom";
+    } else {
+        art_image.src = art;
+
+        art_image_bottom.classList.removeAll("opacity-hundred");
+        art_image.classList.add("opacity-hundred");
+
+        imagePosition = "top";
+    }
+
+
     song_url.href = song.url;
     audio.src = song.preview_url;
 }
 
-function dice() {
-    const continue_playing = autoplay.checked && audio.duration > 0 && !audio.paused
+let de_bounce = new Date();
+const DE_BOUNCE_MILLIS = 500;
+
+function dice(initial) {
+    if (!initial && de_bounce.getTime() + DE_BOUNCE_MILLIS > new Date().getTime()) {
+        return;
+    }
+
+    de_bounce = new Date();
+    const continue_playing = autoplay.checked && audio.duration > 0 && !audio.paused;
 
     play_pause.src = "/static/play-button.png";
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
 
-    get_random_song().then(
-        value => {
-            display_song(value);
+    get_random_song().then(value => {
+        display_song(value);
 
-            if (continue_playing) {
-                audio.play();
-            }
+        if (continue_playing) {
+            audio.play();
         }
-    );
+    });
 }
 
 Array.prototype.includesAll = function (...args) {
@@ -119,12 +159,9 @@ Array.prototype.includesAll = function (...args) {
 }
 
 function advancedIncludes(pattern, object) {
-    if (object.includes(pattern))
-        return true;
-    if (object.split(" ").includesAll(...pattern.split(" ")))
-        return true;
-    if (object.replace(" ", "").includes(pattern.replace(" ", "")))
-        return true;
+    if (object.includes(pattern)) return true;
+    if (object.split(" ").includesAll(...pattern.split(" "))) return true;
+    if (object.replace(" ", "").includes(pattern.replace(" ", ""))) return true;
 
     return false;
 }
@@ -137,7 +174,7 @@ function clickDropdown(genre) {
     selected_genre = genre;
     input.value = genre;
     random_songs = [];
-    dice();
+    dice(false);
 }
 
 function createDropdownChild(name) {
@@ -160,7 +197,7 @@ function updateDropdown() {
     }
 }
 
-input.addEventListener("focusin", ev => {
+input.addEventListener("focusin", () => {
     updateDropdown();
     drop.hidden = false;
 });
@@ -173,9 +210,9 @@ window.onclick = function (event) {
 }
 
 
-input.addEventListener("keyup", ev => updateDropdown())
+input.addEventListener("keyup", () => updateDropdown())
 
-play_pause.addEventListener("click", ev => {
+play_pause.addEventListener("click", () => {
     if (!audio.paused) {
         audio.pause();
     } else {
@@ -183,19 +220,19 @@ play_pause.addEventListener("click", ev => {
     }
 });
 
-audio.addEventListener("play", ev => {
+audio.addEventListener("play", () => {
     play_pause.src = "/static/pause-button.png";
 });
 
-audio.addEventListener("pause", ev => {
+audio.addEventListener("pause", () => {
     play_pause.src = "/static/play-button.png";
 });
 
-song_art_container.addEventListener("mouseenter", ev => {
+song_art_container.addEventListener("mouseenter", () => {
     hover_over.style.display = "flex";
 });
 
-song_art_container.addEventListener("mouseleave", ev => {
+song_art_container.addEventListener("mouseleave", () => {
     hover_over.style.display = "none";
 });
 
@@ -218,19 +255,17 @@ function checkYearInput() {
     }
 }
 
-start_year.addEventListener("focusout", ev => {
+start_year.addEventListener("focusout", () => {
     checkYearInput();
 });
 
-end_year.addEventListener("focusout", ev => {
+end_year.addEventListener("focusout", () => {
     checkYearInput();
 });
 
 
 function redirect_uri() {
-    const redirect_url = location.protocol + '//' + location.host + location.pathname;
-
-    return redirect_url;
+    return location.protocol + '//' + location.host + location.pathname;
 }
 
 async function authorizeSpotify() {
@@ -256,43 +291,31 @@ async function createPlaylist() {
     spotify_create_playlist.hidden = true;
     const try_num = 50;
 
-    let response = await fetch(
-        "/spotify_auth?code=" + params.code + "&redirect_uri=" + redirect_url
-    );
+    let response = await fetch("/spotify_auth?code=" + params.code + "&redirect_uri=" + redirect_url);
     let code = await response.text()
     console.log(code)
 
-    let profile = await fetch(
-        "https://api.spotify.com/v1/me",
-        {
-            headers: {
-                Authorization: "Bearer " + code
-            }
+    let profile = await fetch("https://api.spotify.com/v1/me", {
+        headers: {
+            Authorization: "Bearer " + code
         }
-    )
+    })
 
     let json = await profile.json();
     let userId = json["id"];
 
     let r = (Math.random() + 1).toString(36).substring(7);
 
-    let playlistCreate = await fetch(
-        "https://api.spotify.com/v1/users/" + userId + "/playlists",
-        {
-            method: "POST",
-            headers: {
-                Authorization: "Bearer " + code
-            },
-            body: JSON.stringify(
-                {
-                    "name": selected_genre + " - random playlist (" + r + ")",
-                    "public": false,
-                    "collaborative": false,
-                    "description": ""
-                }
-            )
-        }
-    );
+    let playlistCreate = await fetch("https://api.spotify.com/v1/users/" + userId + "/playlists", {
+        method: "POST", headers: {
+            Authorization: "Bearer " + code
+        }, body: JSON.stringify({
+            "name": selected_genre + " - random playlist (" + r + ")",
+            "public": false,
+            "collaborative": false,
+            "description": ""
+        })
+    });
     let plcJson = await playlistCreate.json();
 
     spotify_playlist_progress.hidden = false;
@@ -302,24 +325,15 @@ async function createPlaylist() {
         let r = await fetch("/request_songs?genre=" + get_selected_genres() + "&no=5&start_year=" + get_start_year() + "&end_year=" + get_end_year());
 
         let arr = await r.json();
-        arr = arr.map(
-            value => "spotify:track:" + value.id
-        );
+        arr = arr.map(value => "spotify:track:" + value.id);
 
-        await fetch(
-            "https://api.spotify.com/v1/playlists/" + plcJson["id"] + "/tracks",
-            {
-                method: "POST",
-                headers: {
-                    Authorization: "Bearer " + code
-                },
-                body: JSON.stringify(
-                    {
-                        uris: arr
-                    }
-                )
-            }
-        );
+        await fetch("https://api.spotify.com/v1/playlists/" + plcJson["id"] + "/tracks", {
+            method: "POST", headers: {
+                Authorization: "Bearer " + code
+            }, body: JSON.stringify({
+                uris: arr
+            })
+        });
         added += 5;
 
         spotify_playlist_progress.innerText = added + " / " + try_num;
@@ -340,4 +354,4 @@ if (params.code !== null) {
     spotify_create_playlist.hidden = false;
 }
 
-dice();
+dice(true);
