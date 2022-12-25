@@ -10,39 +10,79 @@
 
 body {
     margin: 0;
+
+    font-family: Lato, sans-serif;
+    background-color: #121212;
+
+    color: white;
+}
+
+:visited, :link {
+    color: #1ABC9C;
 }
 
 .music-container {
-    width: 400px;
+    width: 100%;
 }
 
 .music-art {
-    width: 400px;
-    height: 400px;
-
     position: absolute;
 
     transition: opacity 400ms ease-in-out;
     opacity: 0;
 }
 
-.hover_over {
-    width: 400px;
-    height: 400px;
+@media screen and (max-device-width: 480px) {
+    .max-width {
+        max-width: 80vw;
+    }
 
+    body {
+        font-size: 2em;
+    }
+
+    input[type=text], input[type=number] {
+        font-size: 2rem;
+    }
+
+    #artists, #song_name {
+        font-size: unset !important;
+    }
+
+    #spotify-auth {
+        font-size: 2rem;
+    }
+
+
+    input[type=checkbox] {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+}
+
+@media screen and (min-device-width: 481px) {
+    .max-width {
+        max-width: 40vh;
+    }
+}
+
+
+.hover_over {
     position: absolute;
 
     background-color: rgba(0, 0, 0, .5);
     z-index: 2;
 
+    width: 100%;
+    aspect-ratio: 1/1;
+
     display: none;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
 }
 
 .song-art-container {
-    width: 400px;
-    height: 400px;
 }
 
 @supports (aspect-ratio: 1/1) {
@@ -67,9 +107,10 @@ body {
 }
 
 #dice {
-    margin-left: 20px;
-    height: 50px;
-    width: 50px;
+    height: 3.5em;
+    width: 3.5em;
+
+    filter: invert();
 }
 
 .drop-item {
@@ -77,14 +118,17 @@ body {
 }
 
 .drop-container {
-    background-color: white;
-    padding: 5px;
+    background-color: #202020;
+    padding: 5px 10px;
     z-index: 3;
     position: absolute;
+
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
 }
 
 #year_to, #year_from {
-    width: 50px;
+    width: 3em;
 }
 
 #play_pause {
@@ -102,8 +146,49 @@ body {
 
 .drop-item:hover {
     font-weight: 900;
+    color: teal;
 }
 
 .opacity-hundred {
     opacity: 100%;
+}
+
+input {
+    background-color: #202020;
+    color: white;
+    padding: .3em;
+
+    accent-color: #1ABC9C;
+    border: 2px solid #202020
+}
+
+
+.top-label {
+    display: flex;
+    flex-direction: column;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+h1 {
+    text-align: center;
+}
+
+button {
+    background-color: #1ABC9C;
+
+    border: none;
+    padding: 1rem;
+
+    font-weight: bold;
+
+    border-radius: .5rem;
 }

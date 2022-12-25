@@ -3,26 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <link href='http://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+
     <link href="/static/index.css" rel="stylesheet">
 </head>
 <body>
 
 <div class="main-container">
-    <div class="">
+    <div style="width: 80%" class="max-width">
+        <h1>Spotify Random Track</h1>
         <div class="mini-container">
-            <div style="width: 50px; margin-left: 20px"></div>
-            <div class="music-container">
-                <div class="mini-container">
+            <div class="music-container max-width">
+                <div class="mini-container" style="justify-content: space-between">
                     <div>
-                        <input id="genre_search" value="{{ selected_genre }}" placeholder="Pop, Rock, ...">
+                        <label for="genre_search" class="top-label">
+                            <span>Genre</span>
+                            <input id="genre_search" type="text" value="{{ selected_genre }}" placeholder="Pop, Rock, ...">
+                        </label>
+
                         <div class="drop-container" id="drop-container" hidden="hidden">
                         </div>
                     </div>
-                    <div>
-                        <input type="number" id="year_from" pattern="[1,2][9,0]\d\d" value="{{ start_year }}">
-                        <span style="padding: 0 2px"> - </span>
-                        <input type="number" id="year_to" pattern="[1,2][9,0]\d\d" value="{{ end_year }}">
-                    </div>
+                    <label for="year-container" class="top-label">
+                        <span>Year</span>
+                        <div id="year-container">
+                            <input type="number" id="year_from" pattern="[1,2][9,0]\d\d" value="{{ start_year }}">
+                            <span style="padding: 0 2px"> - </span>
+                            <input type="number" id="year_to" pattern="[1,2][9,0]\d\d" value="{{ end_year }}">
+                        </div>
+                    </label>
+
                 </div>
                 <div class="mini-container" style="justify-content: space-evenly; margin-top: 16px">
                     <label for="show_live">
@@ -37,36 +47,42 @@
 
                 </div>
 
-                <div id="song_art_container" class="song-art-container" style="margin-top: 1rem;">
-                    <div id="hover_over" class="hover_over">
+                <div id="song_art_container" class="song-art-container max-width" style="margin-top: 1rem;">
+                    <div id="hover_over" class="hover_over max-width">
                         <img id="play_pause" src="/static/play-button.png">
-                    </div>
-                    <img src="" id="song_art_bottom" class="music-art" width="100%">
-                    <img src="" id="song_art" class="music-art" width="100%">
-                </div>
-                <p>
-                    <span id="artists"></span><br>
-                    <a id="song_url" target="_blank"><span id="song_name"></span></a>
-                </p>
 
-                <button id="spotify-auth" onclick="authorizeSpotify()">Auth</button>
+                        <label onclick="autoplay.checked = !autoplay.checked" for="autoplay">
+                            <span>Autoplay</span>
+                            <input type="checkbox" id="autoplay">
+                        </label>
+                    </div>
+                    <img src="" id="song_art_bottom" class="music-art max-width" width="100%">
+                    <img src="" id="song_art" class="music-art max-width" width="100%">
+                </div>
+                <div style="display: flex; justify-content: space-between">
+                    <p>
+                        <span id="artists"></span><br>
+                        <a id="song_url" target="_blank"><span id="song_name"></span></a>
+                    </p>
+
+                    <div style="margin-top: 1em; margin-bottom: 1em; flex-direction: column; margin-left: .5rem; ">
+                        <a onclick="dice(false)">
+                            <img id="dice" src="/static/dice.png" alt="dice">
+                        </a>
+                    </div>
+
+                </div>
+
+
                 <div>
-                    <button id="spotify-create-playlist" hidden="hidden" onclick="createPlaylist()">Create Playlist
-                    </button>
-                    <a target="_blank" id="create-playlist-progress" hidden="hidden"> 0 / 50 </a>
+                    <button id="spotify-auth" onclick="authorizeSpotify()">Create Spotify Playlist</button>
+                    <div>
+                        <a target="_blank" id="create-playlist-progress" hidden=""> 0 / 50 </a>
+                    </div>
+
+
                 </div>
                 <audio id="audio"></audio>
-            </div>
-            <div class="mini-container" style="flex-direction: column; justify-content: center">
-                <a onclick="dice(false)">
-                    <img id="dice" src="/static/dice.png" alt="dice">
-                </a>
-
-                <label for="autoplay">
-                    Autoplay
-                    <input type="checkbox" id="autoplay">
-                </label>
-
             </div>
         </div>
     </div>

@@ -238,13 +238,13 @@ song_art_container.addEventListener("mouseleave", () => {
 
 function checkYearInput() {
     if (start_year.value.match(start_year.pattern)) {
-        start_year.style.border = "2px solid black";
+        start_year.style.border = "2px solid #202020";
     } else {
         start_year.style.border = "2px solid red";
     }
 
     if (end_year.value.match(end_year.pattern)) {
-        end_year.style.border = "2px solid black";
+        end_year.style.border = "2px solid #202020";
     } else {
         end_year.style.border = "2px solid red";
     }
@@ -283,15 +283,14 @@ async function authorizeSpotify() {
 }
 
 
-const spotify_auth = document.getElementById("spotify-auth");
-const spotify_create_playlist = document.getElementById("spotify-create-playlist");
+const spotify = document.getElementById("spotify-auth");
 const spotify_playlist_progress = document.getElementById("create-playlist-progress");
 
 async function createPlaylist() {
-    spotify_create_playlist.hidden = true;
+    spotify.disabled = true;
     const try_num = 50;
 
-    let response = await fetch("/spotify_auth?code=" + params.code + "&redirect_uri=" + redirect_url);
+    let response = await fetch("/spotify_auth?code=" + params.code + "&redirect_uri=" + redirect_uri());
     let code = await response.text()
     console.log(code)
 
@@ -341,8 +340,7 @@ async function createPlaylist() {
     spotify_playlist_progress.innerText = "Click to open playlist";
     spotify_playlist_progress.href = "https://open.spotify.com/playlist/" + plcJson["id"];
 
-    spotify_auth.hidden = false;
-    spotify_create_playlist.hidden = true;
+    spotify.disabled = false;
 }
 
 const params = new Proxy(new URLSearchParams(window.location.search), {
@@ -350,8 +348,10 @@ const params = new Proxy(new URLSearchParams(window.location.search), {
 });
 
 if (params.code !== null) {
-    spotify_auth.hidden = true;
-    spotify_create_playlist.hidden = false;
+    spotify.hidden = true;
+    // spotify_create_playlist.hidden = false;
+
+    createPlaylist().then();
 }
 
 dice(true);
