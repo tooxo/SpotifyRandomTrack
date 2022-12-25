@@ -403,13 +403,10 @@ async def index(request: Request):
 
 
 async def run_async():
-    config = uvicorn.Config("main:app", port=5000, log_level="info")
+    config = uvicorn.Config("main:app", port=os.environ.get("PORT") or 8888, log_level="info")
     server = uvicorn.Server(config)
     await server.serve()
 
 
 if __name__ == '__main__':
     asyncio.run(run_async())
-    # uvicorn.run(
-    #    "main:app", host="0.0.0.0", port=os.environ.get("PORT") or 8888
-    # )
