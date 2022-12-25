@@ -56,9 +56,17 @@
                 </div>
                 <audio id="audio"></audio>
             </div>
-            <a onclick="dice()">
-                <img id="dice" src="/static/dice.png" alt="dice">
-            </a>
+            <div class="mini-container" style="flex-direction: column; justify-content: center">
+                <a onclick="dice()">
+                    <img id="dice" src="/static/dice.png" alt="dice">
+                </a>
+
+                <label for="autoplay">
+                    Autoplay
+                    <input type="checkbox" id="autoplay">
+                </label>
+
+            </div>
         </div>
     </div>
 </div>

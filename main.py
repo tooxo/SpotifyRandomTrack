@@ -142,11 +142,10 @@ async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900"
                 f"{'*'.join(r_chars)}" \
                 f"{'%' if rn == 0 else ''}\""
 
-            if start_year != "1900" and end_year != str(datetime.date.today().year):
+            if start_year != "1900" or end_year != str(datetime.date.today().year):
                 query += " year:" + year
 
             offset = random.randint(0, 999)
-            # print(f"{query=}, {offset=}")
 
             async with session.get(
                     url=f"https://api.spotify.com/v1/search?type=track&include_external=audio&q="
@@ -228,14 +227,18 @@ async def index(request: Request):
                   (
                           "&code=" + request.query_params.get("code")
                   ) if "code" in request.query_params else ""
-              )
+              ) + \
+              "&live=" + request.cookies.get("live") + "&remix=" + request.cookies.get("remix")
 
         response = RedirectResponse(
             url=url,
         )
+
         response.delete_cookie("genre")
         response.delete_cookie("start_year")
         response.delete_cookie("end_year")
+        response.delete_cookie("live")
+        response.delete_cookie("remix")
 
         return response
 
@@ -256,6 +259,9 @@ async def index(request: Request):
         start_year = 1900
         end_year = datetime.date.today().year
 
+    remix = (request.query_params.get("remix") or "true") == "true"
+    live = (request.query_params.get("live") or "true") == "true"
+
     return templates.TemplateResponse(
         "index.html", {
             "request": request,
@@ -263,8 +269,8 @@ async def index(request: Request):
             "selected_genre": genre,
             "start_year": start_year,
             "end_year": end_year,
-            "remix": "checked",
-            "live": "checked"
+            "remix": "checked" if remix else "",
+            "live": "checked" if live else ""
         }
     )
 

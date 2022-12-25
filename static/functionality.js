@@ -20,6 +20,8 @@ const hover_over = document.getElementById("hover_over");
 const live = document.getElementById("show_live");
 const remix = document.getElementById("show_remix");
 
+const autoplay = document.getElementById("autoplay");
+
 function Mutex() {
     let current = Promise.resolve();
     this.lock = () => {
@@ -96,10 +98,20 @@ function display_song(song) {
 }
 
 function dice() {
+    const continue_playing = autoplay.checked && audio.duration > 0 && !audio.paused
+
     play_pause.src = "/static/play-button.png";
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
 
-    get_random_song().then(value => display_song(value));
+    get_random_song().then(
+        value => {
+            display_song(value);
+
+            if (continue_playing) {
+                audio.play();
+            }
+        }
+    );
 }
 
 Array.prototype.includesAll = function (...args) {
@@ -229,6 +241,8 @@ async function authorizeSpotify() {
     document.cookie = "genre=" + selected_genre + ";"
     document.cookie = "start_year=" + start_year.value + ";"
     document.cookie = "end_year=" + end_year.value + ";"
+    document.cookie = "remix=" + remix.checked + ";";
+    document.cookie = "live=" + live.checked + ";";
 
     window.location = "https://accounts.spotify.com/authorize?response_type=code" + "&client_id=" + client_id + "&scope=" + scope + "&redirect_uri=" + redirect_uri() + "&state=" + state;
 }
