@@ -20,8 +20,8 @@ function authorizeSpotify(intention) {
         "genre": selected_genre,
         "start_year": start_year.value,
         "end_year": end_year.value,
-        "remix": remix.checked,
-        "live": remix.checked
+        "remix": remix.checked.toString(),
+        "live": remix.checked.toString()
     });
 
     document.cookie = "intention=" + intention;
