@@ -52,9 +52,12 @@
                         <img id="play_pause" src="/static/play-button.png">
 
                         <div style="width: 70%; padding-top: 1rem; padding-bottom: 1rem;" id="scroll-bar">
-                            <div style="height: 3px; background-color: grey">
-                                <div style="background-color: white; height: 3px; width: 50%"></div>
+                            <div style="height: .4em; background-color: grey; display: flex; align-items: center; border-radius: 2px">
+                                <div id="progress" style="background-color: white; height: 100%; width: 0">
+                                </div>
+                                <div id="knob"></div>
                             </div>
+
                         </div>
                     </div>
                     <img src="" id="song_art_bottom" class="music-art max-width" width="100%">
@@ -66,15 +69,17 @@
                 <div style="display: flex; justify-content: space-between">
                     <p>
                         <span id="artists"></span><br>
-                        <a id="song_url" target="_blank"><span id="song_name"></span></a>
+                        <a id="song_url" target="_blank"><span id="song_name"></span></a><br>
+                        <span id="genres"> </span>
                     </p>
 
                     <div style="margin-top: 1em; margin-bottom: 1em; flex-direction: column; margin-left: .5rem; ">
                         <a onclick="dice(false)">
                             <img id="dice" src="/static/dice.png" alt="dice">
                         </a>
-                    </div>
 
+                        <button id="back" hidden="hidden" onclick="back()" style="display: none"><-</button>
+                    </div>
                 </div>
 
 

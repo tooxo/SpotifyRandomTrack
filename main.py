@@ -132,6 +132,7 @@ def song_filter(song: dict) -> bool:
 class Song:
     name: str
     artists: List[str]
+    artist_ids: List[str]
     art: str
     id: str
     url: str
@@ -143,6 +144,12 @@ class Song:
             artists=list(
                 map(
                     lambda y: y["name"],
+                    x["artists"]
+                )
+            ),
+            artist_ids=list(
+                map(
+                    lambda y: y["id"],
                     x["artists"]
                 )
             ),
@@ -231,8 +238,8 @@ async def retrieve_random_song(
 
 
 @app.get("/genres")
-async def genres(artist_ids: str):
-    artists = urllib.parse.unquote(artist_ids).split(",")
+async def genres(artists: str):
+    _artists = urllib.parse.unquote(artists).split(",")
 
     async with aiohttp.ClientSession(
             headers={
@@ -241,25 +248,42 @@ async def genres(artist_ids: str):
     ) as session:
         for _ in range(2):
             async with session.get(
-                    f"https://api.spotify.com/v1/artists?ids={artist_ids}"
+                    f"https://api.spotify.com/v1/artists?ids={','.join(_artists)}"
             ) as req:
                 if not req.ok:
                     continue
 
-                j = await req.json()
+                web_response = await req.json()
+                break
 
-                return list(
-                    set(
-                        [
-                            item for sublist in
-                            map(
-                                lambda x: x["genres"],
-                                j["artists"]
-                            )
-                            for item in sublist
-                        ]
-                    )
-                )
+    if len(_artists) < 2:
+        return web_response["artists"][0]["genres"][:2]
+
+    main_artist = _artists[0]
+    main_response = next(
+        filter(
+            lambda x: x["id"] == main_artist,
+            web_response["artists"]
+        )
+    )
+    others_genres_flat = [
+        item for sublist in map(
+            lambda x: x["genres"],
+            filter(
+                lambda x: x["id"] != main_artist,
+                web_response["artists"]
+            )
+        )
+        for item in sublist
+    ]
+    result = []
+    for n in main_response["genres"]:
+        if n in others_genres_flat:
+            result.append(n)
+
+    result += main_response["genres"][:2]
+
+    return result[:2]
 
 
 @app.get("/request_songs")
@@ -280,91 +304,6 @@ async def request_pool(genre: str = "pop", no: int = 5, start_year: str = "1900"
         filter(
             lambda x: x is not None,
             results
-        )
-    )
-
-
-@app.get("/request_songs_legacy")
-async def request_song(genre: str = "pop", no: int = 5, start_year: str = "1900",
-                       end_year: str = str(datetime.date.today().year), live: bool = True, remix: bool = True):
-    async with aiohttp.ClientSession(headers={
-        "Authorization": "Bearer " + (await spotify.get_auth_token_async())
-    }) as session:
-        alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
-
-        songs = []
-        ctr = 2
-
-        while len(songs) < no:
-            if ctr == 0:
-                break
-            rn = random.randint(0, 1)
-
-            year = start_year + (f'-{end_year}' if start_year != end_year else '')
-
-            r_chars = [random.choice(alphabet) for _ in range(random.randint(1, 4))]
-            query = \
-                f"genre:\"{urllib.parse.unquote(genre)}\" track:\"{'%' if rn > 0 else ''}" \
-                f"{'*'.join(r_chars)}" \
-                f"{'%' if rn == 0 else ''}\""
-
-            if start_year != "1900" or end_year != str(datetime.date.today().year):
-                query += " year:" + year
-
-            offset = random.randint(0, 1500)
-
-            async with session.get(
-                    url=f"https://api.spotify.com/v1/search?type=track&include_external=audio&q="
-                        f"{urllib.parse.quote(query)}&limit=1&offset={offset}"
-            ) as s:
-                ctr -= 1
-
-                if not s.ok:
-                    continue
-                js = await s.json()
-
-                if len(js["tracks"]["items"]) > 0:
-                    print(f"use: no offset {offset}")
-                    ctr = 2
-
-                    if song_filter(js["tracks"]["items"][0]) \
-                            and (remix or filter_remix(js["tracks"]["items"][0])) \
-                            and (live or filter_live(js["tracks"]["items"][0])):
-                        songs.append(js["tracks"]["items"][0])
-
-                elif js["tracks"]["total"] > 0:
-                    print(f"use: offset {offset}")
-                    async with session.get(
-                            url=f"https://api.spotify.com/v1/search?type=track&include_external=audio&q="
-                                f"{urllib.parse.quote(query)}&limit=1&offset={random.randint(0, js['tracks']['total'] - 1)}"
-                    ) as s2:
-                        if not s2.ok:
-                            continue
-                        js2 = await s2.json()
-                        if len(js2["tracks"]["items"]) > 0:
-                            if song_filter(js2["tracks"]["items"][0]) \
-                                    and (remix or filter_remix(js2["tracks"]["items"][0])) \
-                                    and (live or filter_live(js2["tracks"]["items"][0])):
-                                songs.append(js2["tracks"]["items"][0])
-                            ctr = 2
-
-    return list(
-        map(
-            lambda x: {
-                "artists":
-                    list(
-                        map(
-                            lambda y: y["name"],
-                            x["artists"]
-                        )
-                    ),
-                "name": x["name"],
-                "art": x["album"]["images"][0]["url"],
-                "preview_url": x["preview_url"],
-                "url": x["external_urls"]["spotify"],
-                "id": x["id"]
-            },
-            songs
         )
     )
 

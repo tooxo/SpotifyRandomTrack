@@ -4,7 +4,7 @@
     align-items: center;
     justify-content: center;
 
-    height: 100vh;
+    min-height: 100vh;
     width: 100vw;
 }
 
@@ -71,12 +71,12 @@ body {
     position: absolute;
 
     background-color: rgba(0, 0, 0, .5);
-    z-index: 2;
+    display: flex;
 
     width: 100%;
     aspect-ratio: 1/1;
 
-    display: none;
+    z-index: -1;
     justify-content: center;
     align-items: center;
     flex-direction: column;
@@ -191,4 +191,23 @@ button {
     font-weight: bold;
 
     border-radius: .5rem;
+}
+
+#progress {
+    transition: width 500ms linear;
+}
+
+#knob {
+    width: .75em;
+    height: .75em;
+    border-radius: 10px;
+    background-color: white;
+
+    position: absolute;
+    cursor: move;
+    user-select: none;
+
+    transition: left 100ms linear;
+    left: 0;
+    margin-left: calc(15% - 0.375em);
 }

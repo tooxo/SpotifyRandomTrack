@@ -24,6 +24,9 @@ const remix = document.getElementById("show_remix");
 
 const scroll = document.getElementById("scroll-bar");
 
+const die = document.getElementById("dice");
+const back_btn = document.getElementById("back");
+
 function Mutex() {
     let current = Promise.resolve();
     this.lock = () => {
@@ -38,7 +41,32 @@ function Mutex() {
 }
 
 let list_lock = new Mutex();
-let random_songs = [];
+let random_songs = new PlusOneList();
+
+function PlusOneList() {
+    this.backlist = [];
+    this.current = null;
+    this.minus_one = null;
+    this.isBack = false;
+
+    this.pop = () => {
+        this.minus_one = this.current;
+        this.current = this.backlist.pop();
+
+        console.log("minus_one: ", this.minus_one, " current: ", this.current);
+
+        return this.current;
+    }
+    this.backward = () => this.isBack = true;
+    this.forward = () => this.isBack = false;
+    this.push = (...f) => this.backlist.push(...f);
+    this.length = () => this.backlist.length;
+    this.clear = () => {
+        this.backlist = [];
+        this.current = null;
+        this.minus_one = null;
+    }
+}
 
 function get_selected_genres() {
     if (genre_list.includes(selected_genre)) return selected_genre;
@@ -84,10 +112,10 @@ async function fill_up_random_songs() {
 }
 
 async function get_random_song() {
-    console.log(random_songs.length);
-    if (random_songs.length === 0) {
+    console.log(random_songs.length());
+    if (random_songs.length() === 0) {
         await fill_up_random_songs();
-    } else if (random_songs.length === 2) {
+    } else if (random_songs.length() === 2) {
         fill_up_random_songs().then();
     }
 
@@ -129,6 +157,26 @@ function display_song(song) {
 
     song_url.href = song.url;
     audio.src = song.preview_url;
+
+    fetchGenres(song).then()
+}
+
+const genres = document.getElementById("genres");
+
+async function fetchGenres(song) {
+    let art = song.artist_ids.join(",")
+    genres.innerText = " "
+
+    const response = await fetch("/genres?artists=" + art);
+    if (!response.ok) genres.innerText = "error while fetching genres"; else genres.innerText = (await response.json()).join(", ");
+}
+
+function checkButtonFunc() {
+    if (random_songs.minus_one !== null && !random_songs.isBack) {
+        back_btn.hidden = false;
+    } else {
+        back_btn.hidden = true;
+    }
 }
 
 let de_bounce = new Date();
@@ -145,13 +193,27 @@ function dice(initial) {
     play_pause.src = "/static/play-button.png";
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
 
-    get_random_song().then(value => {
-        display_song(value);
+    if (random_songs.minus_one !== null && random_songs.isBack) {
+        display_song(random_songs.current);
+        random_songs.forward();
+    } else {
+        get_random_song().then(value => {
+            display_song(value);
 
-        if (continue_playing) {
-            audio.play();
-        }
-    });
+            if (continue_playing) {
+                audio.play();
+            }
+        });
+    }
+    checkButtonFunc();
+}
+
+function back() {
+    if (random_songs.minus_one !== null && !random_songs.isBack) {
+        display_song(random_songs.minus_one);
+        random_songs.backward();
+        checkButtonFunc();
+    }
 }
 
 Array.prototype.includesAll = function (...args) {
@@ -173,7 +235,7 @@ function filterDropdown() {
 function clickDropdown(genre) {
     selected_genre = genre;
     input.value = genre;
-    random_songs = [];
+    random_songs.clear();
     dice(false);
 }
 
@@ -229,11 +291,11 @@ audio.addEventListener("pause", () => {
 });
 
 song_art_container.addEventListener("mouseenter", () => {
-    hover_over.style.display = "flex";
+    hover_over.style.zIndex = "2";
 });
 
 song_art_container.addEventListener("mouseleave", () => {
-    hover_over.style.display = "none";
+    hover_over.style.zIndex = "-1";
 });
 
 function checkYearInput() {
@@ -343,27 +405,57 @@ async function createPlaylist() {
     spotify.disabled = false;
 }
 
+const progress = document.getElementById("progress");
+const knob = document.getElementById("knob");
+
+let lock = false;
+audio.addEventListener("timeupdate", () => {
+        progress.style.width = (audio.currentTime / audio.duration * 100) + "%";
+        if (!lock)
+            knob.style.left = (audio.currentTime / audio.duration) * scroll.offsetWidth + "px";
+    }
+)
+
+const mouseMove = function (ev) {
+    const dx = Number.parseInt(knob.style.left.replace("px", "")) + (ev.clientX - start_pos.x);
+    knob.style.left = dx + "px";
+
+    start_pos.x = ev.clientX;
+
+    const perc = dx / scroll.offsetWidth;
+    audio.currentTime = audio.duration * perc
+}
+const mouseUp = function (ev) {
+    document.removeEventListener('mousemove', mouseMove);
+    document.removeEventListener('mouseup', mouseUp);
+    lock = false;
+}
+
+let start_pos = {x: 0, y: 0}
+knob.addEventListener("mousedown", ev => {
+    lock = true;
+    start_pos.x = ev.clientX;
+    start_pos.y = ev.clientY;
+
+    document.addEventListener("mousemove", mouseMove);
+    document.addEventListener("mouseup", mouseUp)
+});
+
 scroll.addEventListener(
-    "mousedown",
-    ev => {
+    "click", ev => {
+        const perc = ev.offsetX / scroll.offsetWidth;
+        audio.currentTime = audio.duration * perc
     }
 )
 
-art_image.addEventListener(
-    "transitionend",
-    ev => {
-        if (ev.target.opacity === 0)
-            art_image_bottom.src = ""
-    }
-)
 
-art_image_bottom.addEventListener(
-    "transitionend",
-    ev => {
-        if (ev.target.opacity === 0)
-            art_image.src = ""
-    }
-)
+art_image.addEventListener("transitionend", ev => {
+    if (ev.target.opacity === 0) art_image_bottom.src = ""
+})
+
+art_image_bottom.addEventListener("transitionend", ev => {
+    if (ev.target.opacity === 0) art_image.src = ""
+})
 
 const params = new Proxy(new URLSearchParams(window.location.search), {
     get: (searchParams, prop) => searchParams.get(prop),
