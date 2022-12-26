@@ -122,6 +122,9 @@ def song_filter(song: dict) -> bool:
     if re.match(r"(Part)|(Chapter) \d{1,4}", song["name"]) is not None and "-" in song["name"]:
         print(f"skip: generic part; {song['name']}")
         return False
+    if re.match(r"Capítulo \d{1,4}", song["name"]) is not None and "-" in song["name"]:
+        print(f"skip: generic part (espanol); {song['name']}")
+        return False
     return True
 
 
