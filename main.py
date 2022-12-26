@@ -116,7 +116,7 @@ def song_filter(song: dict) -> bool:
     if song["artists"][0]["name"] == "Anonym" and "Kapitel" in song["name"]:
         print("skip: anonym kapitel")
         return False
-    if re.match(r"(Kapitel \d{1,4}(\.\d{1,4})?)", song["name"]) is not None:
+    if re.match(r"((Kapitel)|(Teil) \d{1,4}(\.\d{1,4})?$|( -))", song["name"]) is not None:
         print(f"skip: generic kapitel; {song['name']}")
         return False
     if re.match(r"(Part)|(Chapter) \d{1,4}", song["name"]) is not None and "-" in song["name"]:
