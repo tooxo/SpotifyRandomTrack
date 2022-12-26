@@ -418,7 +418,7 @@ audio.addEventListener("timeupdate", () => {
 
 const mouseMove = function (ev) {
     const dx = Number.parseInt(knob.style.left.replace("px", "")) + (ev.clientX - start_pos.x);
-    knob.style.left = dx + "px";
+    knob.style.left = Math.min(Math.max(dx, 0), scroll.offsetWidth) + "px";
 
     start_pos.x = ev.clientX;
 
