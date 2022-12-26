@@ -70,7 +70,7 @@ async def test(pop_cap: int = 100):
             )
 
 
-@app.get("/spotify_auth", response_class=HTMLResponse)
+@app.get("/spotify_auth")
 async def spotify_auth(code: str, redirect_uri: str):
     encoded = base64.b64encode(
         (os.environ['SPOTIFY_API_ID'] + ":" + os.environ['SPOTIFY_API_SECRET']).encode("ascii")).decode("ascii")
@@ -90,7 +90,35 @@ async def spotify_auth(code: str, redirect_uri: str):
         ) as req:
             js = await req.json()
             print(js)
-            return js["access_token"]
+            s.headers["Authorization"] = "Bearer " + js["access_token"]
+            profile = await (await s.get("https://api.spotify.com/v1/me")).json()
+
+            return {
+                "access_token": js["access_token"],
+                "refresh_token": js["refresh_token"],
+                "expires_in": js["expires_in"],
+                "user_id": profile["id"]
+            }
+
+
+@app.get("/spotify_refresh")
+async def spotify_refresh(token: str):
+    encoded = base64.b64encode(
+        (os.environ['SPOTIFY_API_ID'] + ":" + os.environ['SPOTIFY_API_SECRET']).encode("ascii")).decode("ascii")
+
+    async with aiohttp.ClientSession(
+            headers={
+                "Authorization": f"Basic {encoded}"
+            }
+    ) as sess:
+        async with sess.post(
+                "https://accounts.spotify.com/api/token",
+                data={
+                    'grant_type': 'refresh_token',
+                    'refresh_token': token
+                }
+        ) as req:
+            return await req.json()
 
 
 def filter_remix(song: dict) -> bool:

@@ -24,7 +24,6 @@ const remix = document.getElementById("show_remix");
 
 const scroll = document.getElementById("scroll-bar");
 
-const die = document.getElementById("dice");
 const back_btn = document.getElementById("back");
 
 function Mutex() {
@@ -326,85 +325,6 @@ end_year.addEventListener("focusout", () => {
 });
 
 
-function redirect_uri() {
-    return location.protocol + '//' + location.host + location.pathname;
-}
-
-async function authorizeSpotify() {
-    const client_id = "ed8a00aa20d54561942f418c30cf6d72";
-    const scope = "playlist-modify-private playlist-modify-public";
-    const state = Date.now().toFixed();
-
-    document.cookie = "genre=" + selected_genre + ";"
-    document.cookie = "start_year=" + start_year.value + ";"
-    document.cookie = "end_year=" + end_year.value + ";"
-    document.cookie = "remix=" + remix.checked + ";";
-    document.cookie = "live=" + live.checked + ";";
-
-    window.location = "https://accounts.spotify.com/authorize?response_type=code" + "&client_id=" + client_id + "&scope=" + scope + "&redirect_uri=" + redirect_uri() + "&state=" + state;
-}
-
-
-const spotify = document.getElementById("spotify-auth");
-const spotify_playlist_progress = document.getElementById("create-playlist-progress");
-
-async function createPlaylist() {
-    spotify.disabled = true;
-    const try_num = 50;
-
-    let response = await fetch("/spotify_auth?code=" + params.code + "&redirect_uri=" + redirect_uri());
-    let code = await response.text()
-    console.log(code)
-
-    let profile = await fetch("https://api.spotify.com/v1/me", {
-        headers: {
-            Authorization: "Bearer " + code
-        }
-    })
-
-    let json = await profile.json();
-    let userId = json["id"];
-
-    let r = (Math.random() + 1).toString(36).substring(7);
-
-    let playlistCreate = await fetch("https://api.spotify.com/v1/users/" + userId + "/playlists", {
-        method: "POST", headers: {
-            Authorization: "Bearer " + code
-        }, body: JSON.stringify({
-            "name": selected_genre + " - random playlist (" + r + ")",
-            "public": false,
-            "collaborative": false,
-            "description": ""
-        })
-    });
-    let plcJson = await playlistCreate.json();
-
-    spotify_playlist_progress.hidden = false;
-
-    let added = 0;
-    while (try_num > added) {
-        let r = await fetch("/request_songs?genre=" + get_selected_genres() + "&no=5&start_year=" + get_start_year() + "&end_year=" + get_end_year());
-
-        let arr = await r.json();
-        arr = arr.map(value => "spotify:track:" + value.id);
-
-        await fetch("https://api.spotify.com/v1/playlists/" + plcJson["id"] + "/tracks", {
-            method: "POST", headers: {
-                Authorization: "Bearer " + code
-            }, body: JSON.stringify({
-                uris: arr
-            })
-        });
-        added += 5;
-
-        spotify_playlist_progress.innerText = added + " / " + try_num;
-    }
-    spotify_playlist_progress.innerText = "Click to open playlist";
-    spotify_playlist_progress.href = "https://open.spotify.com/playlist/" + plcJson["id"];
-
-    spotify.disabled = false;
-}
-
 const progress = document.getElementById("progress");
 const knob = document.getElementById("knob");
 
@@ -456,16 +376,5 @@ art_image.addEventListener("transitionend", ev => {
 art_image_bottom.addEventListener("transitionend", ev => {
     if (ev.target.opacity === 0) art_image.src = ""
 })
-
-const params = new Proxy(new URLSearchParams(window.location.search), {
-    get: (searchParams, prop) => searchParams.get(prop),
-});
-
-if (params.code !== null) {
-    spotify.hidden = true;
-    // spotify_create_playlist.hidden = false;
-
-    createPlaylist().then();
-}
 
 dice(true);
