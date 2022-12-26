@@ -240,3 +240,8 @@ button {
     opacity: 0;
     pointer-events: none;
 }
+
+.random_text:link, .random_text:visited, .random_text:link, .random_text {
+    text-decoration: none;
+    color: black;
+}
