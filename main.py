@@ -119,7 +119,7 @@ def song_filter(song: dict) -> bool:
     if re.match(r"(Kapitel \d{1,4}(\.\d{1,4})?)", song["name"]) is not None:
         print(f"skip: generic kapitel; {song['name']}")
         return False
-    if re.match(r"Part \d{1,4}", song["name"]) is not None and "-" in song["name"]:
+    if re.match(r"(Part)|(Chapter) \d{1,4}", song["name"]) is not None and "-" in song["name"]:
         print(f"skip: generic part; {song['name']}")
         return False
     return True
@@ -175,8 +175,14 @@ async def retrieve_random_song(
             rn = random.randint(0, 1)
 
             r_chars = [random.choice(alphabet) for _ in range(random.randint(1, 4))]
+
+            if specs.genre == "random":
+                query = ""
+            else:
+                query = f"genre:\"{urllib.parse.unquote(specs.genre)}\" "
+
             query = \
-                f"genre:\"{urllib.parse.unquote(specs.genre)}\" track:\"{'%' if rn > 0 else ''}" \
+                f"{query}track:\"{'%' if rn > 0 else ''}" \
                 f"{'*'.join(r_chars)}" \
                 f"{'%' if rn == 0 else ''}\""
             if specs.start_year != "1900" or specs.end_year != str(datetime.date.today().year):
@@ -219,6 +225,38 @@ async def retrieve_random_song(
                                     and (specs.remix or filter_remix(track)) \
                                     and (specs.live or filter_live(track)):
                                 return Song.from_json(track)
+
+
+@app.get("/genres")
+async def genres(artist_ids: str):
+    artists = urllib.parse.unquote(artist_ids).split(",")
+
+    async with aiohttp.ClientSession(
+            headers={
+                "Authorization": "Bearer " + (await spotify.get_auth_token_async())
+            }
+    ) as session:
+        for _ in range(2):
+            async with session.get(
+                    f"https://api.spotify.com/v1/artists?ids={artist_ids}"
+            ) as req:
+                if not req.ok:
+                    continue
+
+                j = await req.json()
+
+                return list(
+                    set(
+                        [
+                            item for sublist in
+                            map(
+                                lambda x: x["genres"],
+                                j["artists"]
+                            )
+                            for item in sublist
+                        ]
+                    )
+                )
 
 
 @app.get("/request_songs")
@@ -369,10 +407,10 @@ async def index(request: Request):
 
         return response
 
-    genre = request.query_params.get("genre") or "pop"
+    genre = request.query_params.get("genre") or "random"
 
     if urllib.parse.unquote(genre.lower()) not in all_genres:
-        genre = "pop"
+        genre = "random"
 
     start_year = int_or_default(request.query_params.get("start_year"), 1900)
     end_year = int_or_default(request.query_params.get("end_year"), datetime.date.today().year)

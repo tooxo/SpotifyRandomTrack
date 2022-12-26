@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <link href='http://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
 
     <link href="/static/index.css" rel="stylesheet">
 </head>
@@ -18,7 +18,8 @@
                     <div>
                         <label for="genre_search" class="top-label">
                             <span>Genre</span>
-                            <input id="genre_search" type="text" value="{{ selected_genre }}" placeholder="Pop, Rock, ...">
+                            <input id="genre_search" type="text" value="{{ selected_genre }}"
+                                   placeholder="Pop, Rock, ...">
                         </label>
 
                         <div class="drop-container" id="drop-container" hidden="hidden">
@@ -44,20 +45,23 @@
                         <input type="checkbox" id="show_remix" {{ remix }}>
                         Show Remixes
                     </label>
-
                 </div>
 
                 <div id="song_art_container" class="song-art-container max-width" style="margin-top: 1rem;">
                     <div id="hover_over" class="hover_over max-width">
                         <img id="play_pause" src="/static/play-button.png">
 
-                        <label onclick="autoplay.checked = !autoplay.checked" for="autoplay">
-                            <span>Autoplay</span>
-                            <input type="checkbox" id="autoplay">
-                        </label>
+                        <div style="width: 70%; padding-top: 1rem; padding-bottom: 1rem;" id="scroll-bar">
+                            <div style="height: 3px; background-color: grey">
+                                <div style="background-color: white; height: 3px; width: 50%"></div>
+                            </div>
+                        </div>
                     </div>
                     <img src="" id="song_art_bottom" class="music-art max-width" width="100%">
                     <img src="" id="song_art" class="music-art max-width" width="100%">
+                </div>
+                <div>
+
                 </div>
                 <div style="display: flex; justify-content: space-between">
                     <p>
@@ -93,7 +97,6 @@
 <script>
     const genre_list = [{{ GENRE_LIST | safe }}];
     let selected_genre = '{{ selected_genre }}';
-
 </script>
 <script src="/static/functionality.js"></script>
 

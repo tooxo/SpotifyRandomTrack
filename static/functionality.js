@@ -22,7 +22,7 @@ const hover_over = document.getElementById("hover_over");
 const live = document.getElementById("show_live");
 const remix = document.getElementById("show_remix");
 
-const autoplay = document.getElementById("autoplay");
+const scroll = document.getElementById("scroll-bar");
 
 function Mutex() {
     let current = Promise.resolve();
@@ -140,7 +140,7 @@ function dice(initial) {
     }
 
     de_bounce = new Date();
-    const continue_playing = autoplay.checked && audio.duration > 0 && !audio.paused;
+    const continue_playing = audio.duration > 0 && !audio.paused;
 
     play_pause.src = "/static/play-button.png";
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
@@ -342,6 +342,28 @@ async function createPlaylist() {
 
     spotify.disabled = false;
 }
+
+scroll.addEventListener(
+    "mousedown",
+    ev => {
+    }
+)
+
+art_image.addEventListener(
+    "transitionend",
+    ev => {
+        if (ev.target.opacity === 0)
+            art_image_bottom.src = ""
+    }
+)
+
+art_image_bottom.addEventListener(
+    "transitionend",
+    ev => {
+        if (ev.target.opacity === 0)
+            art_image.src = ""
+    }
+)
 
 const params = new Proxy(new URLSearchParams(window.location.search), {
     get: (searchParams, prop) => searchParams.get(prop),
