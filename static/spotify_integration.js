@@ -9,7 +9,7 @@ function redirect_uri() {
     return location.protocol + '//' + location.host + location.pathname;
 }
 
-function authorizeSpotify() {
+function authorizeSpotify(intention) {
     const client_id = "ed8a00aa20d54561942f418c30cf6d72";
     const scope = "playlist-modify-private playlist-modify-public playlist-read-private";
     const state = Date.now().toFixed();
@@ -19,6 +19,11 @@ function authorizeSpotify() {
     document.cookie = "end_year=" + end_year.value + ";"
     document.cookie = "remix=" + remix.checked + ";";
     document.cookie = "live=" + live.checked + ";";
+
+    document.cookie = "intention=" + intention;
+    document.cookie = "song_state=" + JSON.stringify({
+        "current": random_songs.current, "minus_one": random_songs.minus_one,
+    })
 
     window.location = "https://accounts.spotify.com/authorize?response_type=code" + "&client_id=" + client_id + "&scope=" + scope + "&redirect_uri=" + redirect_uri() + "&state=" + state;
 }
@@ -38,16 +43,12 @@ const setSpotifyInfo = (newVal) => {
 }
 
 
-async function assureAuth() {
+async function assureAuth(intention) {
     if (getSpotifyInfo() != null) {
         const info = getSpotifyInfo();
-        if (
-            Date.parse(info["expire_date"]) < Date.now()
-        ) {
+        if (Date.parse(info["expire_date"]) < Date.now()) {
             // refresh
-            const resp = await fetch(
-                "/spotify_refresh?token=" + info["refresh_token"]
-            );
+            const resp = await fetch("/spotify_refresh?token=" + info["refresh_token"]);
             const par = await resp.json();
 
             const newInfo = getSpotifyInfo();
@@ -68,14 +69,10 @@ async function assureAuth() {
 
         loc_params.delete("code");
 
-        window.history.replaceState(
-            null,
-            "",
-            redirect_uri() + "?" + loc_params.toString()
-        )
+        window.history.replaceState(null, "", redirect_uri() + "?" + loc_params.toString())
     } else {
         // TODO: somehow save current state
-        authorizeSpotify();
+        authorizeSpotify(intention);
     }
 }
 
@@ -84,7 +81,7 @@ async function createPlaylist() {
     spotify.disabled = true;
     const try_num = 50;
 
-    const context = assureAuth();
+    const context = assureAuth("playlist");
 
     let r = (Math.random() + 1).toString(36).substring(7);
 
@@ -133,10 +130,7 @@ function getCookie(name) {
 }
 
 function deleteCookie(sKey, sPath, sDomain) {
-    document.cookie = encodeURIComponent(sKey) +
-        "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" +
-        (sDomain ? "; domain=" + sDomain : "") +
-        (sPath ? "; path=" + sPath : "");
+    document.cookie = encodeURIComponent(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "");
 }
 
 const PLAYLIST_NAME = "SpotifyRandomTracks – Favourites"
@@ -144,14 +138,11 @@ const PLAYLIST_NAME = "SpotifyRandomTracks – Favourites"
 async function playlistWithThisName(name, auth_token) {
     let json = {"next": "https://api.spotify.com/v1/me/playlists?limit=50"}
     while (json["next"] !== null) {
-        let response = await fetch(
-            json["next"],
-            {
-                headers: {
-                    Authorization: "Bearer " + auth_token
-                }
+        let response = await fetch(json["next"], {
+            headers: {
+                Authorization: "Bearer " + auth_token
             }
-        )
+        })
         json = await response.json();
         for (let x of json["items"]) {
             if (x["name"] === name) {
@@ -167,7 +158,7 @@ async function playlistWithThisName(name, auth_token) {
 async function getFavouritePlaylist() {
     let id = getCookie("playlist");
     if (id === undefined) {
-        const context = await assureAuth();
+        const context = await assureAuth("favourite");
 
         id = await playlistWithThisName(PLAYLIST_NAME, context["access_token"]);
 
@@ -186,15 +177,12 @@ async function getFavouritePlaylist() {
         document.cookie = "playlist=" + id;
     } else {
         // assure this playlist still exists
-        const context = await assureAuth();
-        const response = await fetch(
-            "https://api.spotify.com/v1/playlists/" + id,
-            {
-                headers: {
-                    "Authorization": "Bearer " + context["access_token"]
-                }
+        const context = await assureAuth("favourite");
+        const response = await fetch("https://api.spotify.com/v1/playlists/" + id, {
+            headers: {
+                "Authorization": "Bearer " + context["access_token"]
             }
-        );
+        });
         if (!response.ok) {
             deleteCookie("playlist");
             return await getFavouritePlaylist();
@@ -206,38 +194,42 @@ async function getFavouritePlaylist() {
 
 async function addToFav() {
     let current_song;
-    if (random_songs.isBack)
-        current_song = random_songs.minus_one;
-    else
-        current_song = random_songs.current;
+    if (random_songs.isBack) current_song = random_songs.minus_one; else current_song = random_songs.current;
 
     const id = current_song["id"];
     const playlist_id = await getFavouritePlaylist();
-    const context = await assureAuth();
+    const context = await assureAuth("favourite");
 
-    await fetch(
-        "https://api.spotify.com/v1/playlists/" + playlist_id + "/tracks",
-        {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + context["access_token"]
-            },
-            body: JSON.stringify(["spotify:track:" + id])
+    await fetch("https://api.spotify.com/v1/playlists/" + playlist_id + "/tracks", {
+        method: "POST", headers: {
+            "Authorization": "Bearer " + context["access_token"]
+        }, body: JSON.stringify(["spotify:track:" + id])
+    })
+}
+
+
+if (params.code !== null) {
+    assureAuth("code").then(
+        value => {
+            const action = getCookie("intention");
+            deleteCookie("intention");
+            if (action === "playlist") {
+                spotify.hidden = true;
+                createPlaylist().then();
+            } else if (action === "favourite") {
+                // load from state
+                const state = JSON.parse(getCookie("song_state"));
+
+                random_songs.current = state["current"]
+                random_songs.minus_one = state["minus_one"]
+
+                deleteCookie("song_state");
+                display_song(random_songs.current);
+
+                addToFav().then();
+            }
         }
-    )
-}
-
-
-if (params.code !== null)
-    assureAuth().then();
-
-const action = getCookie("nextAction");
-if (action === "playlist") {
-    spotify.hidden = true;
-    deleteCookie("nextAction");
-    createPlaylist().then();
-} else if (action === "favourite") {
-
-}
-
+    );
+} else
+    dice(true)
 

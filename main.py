@@ -50,26 +50,6 @@ with open("genre_list.txt", "r") as f:
     )
 
 
-@app.get("/rec")
-async def test(pop_cap: int = 100):
-    async with aiohttp.ClientSession(headers={
-        "Authorization": "Bearer " + (await spotify.get_auth_token_async())
-    }) as session:
-        mx = random.randint(0, pop_cap)
-        async with session.get(
-                f"https://api.spotify.com/v1/recommendations?seed_genres=pop&max_popularity={mx}&limit=5"
-        ) as req:
-            return list(
-                map(
-                    lambda y: {"name": y.name, "artist": y.artists[0].name, "url": y.preview_url},
-                    map(
-                        lambda x: api_commons.spotify.Track.from_api_response(api_response=json.dumps(x)),
-                        (await req.json())["tracks"]
-                    )
-                )
-            )
-
-
 @app.get("/spotify_auth")
 async def spotify_auth(code: str, redirect_uri: str):
     encoded = base64.b64encode(

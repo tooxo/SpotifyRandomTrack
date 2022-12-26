@@ -376,5 +376,3 @@ art_image.addEventListener("transitionend", ev => {
 art_image_bottom.addEventListener("transitionend", ev => {
     if (ev.target.opacity === 0) art_image.src = ""
 })
-
-dice(true);
