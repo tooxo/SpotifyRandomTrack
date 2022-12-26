@@ -341,7 +341,7 @@ async def index(request: Request):
                   (
                           "&code=" + request.query_params.get("code")
                   ) if "code" in request.query_params else ""
-              ) + "&live=" + search_state.get("live") + "&remix=" + search_state.get("remix")
+              ) + "&live=" + str(search_state.get("live")).lower() + "&remix=" + str(search_state.get("remix")).lower()
 
         response = RedirectResponse(
             url=url,
