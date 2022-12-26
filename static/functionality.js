@@ -26,6 +26,8 @@ const scroll = document.getElementById("scroll-bar");
 
 const back_btn = document.getElementById("back");
 
+const fav = document.getElementById("fav");
+
 function Mutex() {
     let current = Promise.resolve();
     this.lock = () => {
@@ -157,7 +159,9 @@ function display_song(song) {
     song_url.href = song.url;
     audio.src = song.preview_url;
 
-    fetchGenres(song).then()
+    updateFavButton(song.id);
+
+    fetchGenres(song).then();
 }
 
 const genres = document.getElementById("genres");
@@ -172,9 +176,9 @@ async function fetchGenres(song) {
 
 function checkButtonFunc() {
     if (random_songs.minus_one !== null && !random_songs.isBack) {
-        back_btn.hidden = false;
+        back_btn.classList.removeAll("hide");
     } else {
-        back_btn.hidden = true;
+        back_btn.classList.add("hide");
     }
 }
 

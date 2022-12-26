@@ -69,7 +69,6 @@ async def spotify_auth(code: str, redirect_uri: str):
                 }
         ) as req:
             js = await req.json()
-            print(js)
             s.headers["Authorization"] = "Bearer " + js["access_token"]
             profile = await (await s.get("https://api.spotify.com/v1/me")).json()
 
@@ -335,25 +334,20 @@ genres_string = list(
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    if request.cookies.get("genre") is not None:
-        url = "/?genre=" + request.cookies.get("genre") + "&start_year=" + request.cookies.get(
-            "start_year") + "&end_year=" + request.cookies.get("end_year") + \
-              (
+    if request.cookies.get("search_state") is not None:
+        search_state = json.loads(request.cookies.get("search_state"))
+        url = "/?genre=" + search_state.get("genre") + "&start_year=" + search_state.get(
+            "start_year") + "&end_year=" + search_state.get("end_year") + (
                   (
                           "&code=" + request.query_params.get("code")
                   ) if "code" in request.query_params else ""
-              ) + \
-              "&live=" + request.cookies.get("live") + "&remix=" + request.cookies.get("remix")
+              ) + "&live=" + search_state.get("live") + "&remix=" + search_state.get("remix")
 
         response = RedirectResponse(
             url=url,
         )
 
-        response.delete_cookie("genre")
-        response.delete_cookie("start_year")
-        response.delete_cookie("end_year")
-        response.delete_cookie("live")
-        response.delete_cookie("remix")
+        response.delete_cookie("search_state")
 
         return response
 

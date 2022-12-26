@@ -1,7 +1,6 @@
 .main-container {
     display: flex;
 
-    align-items: center;
     justify-content: center;
 
     min-height: 100vh;
@@ -106,9 +105,9 @@ body {
     align-items: center;
 }
 
-#dice {
-    height: 3.5em;
-    width: 3.5em;
+#dice, #fav {
+    height: 3em;
+    width: 3em;
 
     filter: invert();
 }
@@ -210,4 +209,34 @@ button {
     transition: left 100ms linear;
     left: 0;
     margin-left: calc(15% - 0.375em);
+}
+
+.button_row {
+    height: 3em;
+    display: flex;
+}
+
+.button_row > a {
+    height: 3em;
+}
+
+.button_row > a > img, #back > img {
+    height: 100%;
+}
+
+#fav {
+    transition: filter 250ms ease;
+}
+
+#fav.playlist_active {
+    filter: invert(66%) sepia(22%) saturate(4444%) hue-rotate(122deg) brightness(92%) contrast(80%);
+}
+
+#back {
+    transition: opacity 250ms ease;
+}
+
+#back.hide {
+    opacity: 0;
+    pointer-events: none;
 }

@@ -63,8 +63,18 @@
                     <img src="" id="song_art_bottom" class="music-art max-width" width="100%">
                     <img src="" id="song_art" class="music-art max-width" width="100%">
                 </div>
-                <div>
-
+                <div class="button_row" style="filter: invert();">
+                    <div style="flex: 1; padding: .5em; box-sizing: border-box">
+                        <a onclick="back()" href="#" id="back" class="hide">
+                            <img src="/static/return.png">
+                        </a>
+                    </div>
+                    <a onclick="dice(false)" href="#"
+                       style="flex: 2; display: flex; justify-content: center; align-items: center; padding: .5em; box-sizing: border-box">
+                        <img src="/static/dice.png">
+                        <span>Random</span>
+                    </a>
+                    <div style="flex: 1; padding: .5em; box-sizing: border-box"></div>
                 </div>
                 <div style="display: flex; justify-content: space-between">
                     <p>
@@ -73,12 +83,10 @@
                         <span id="genres"> </span>
                     </p>
 
-                    <div style="margin-top: 1em; margin-bottom: 1em; flex-direction: column; margin-left: .5rem; ">
-                        <a onclick="dice(false)">
-                            <img id="dice" src="/static/dice.png" alt="dice">
+                    <div style="margin-top: 1em; margin-bottom: 1em; flex-direction: column; margin-left: .5rem">
+                        <a>
+                            <img id="fav" src="/static/playlist.png" alt="Add to Playlist">
                         </a>
-
-                        <button id="back" hidden="hidden" onclick="back()" style="display: none"><-</button>
                     </div>
                 </div>
 
@@ -88,11 +96,8 @@
                     <div>
                         <a target="_blank" id="create-playlist-progress" hidden=""> 0 / 50 </a>
                     </div>
-
-
                 </div>
                 <audio id="audio"></audio>
-                <button onclick="addToFav()">Favourite</button>
             </div>
         </div>
     </div>

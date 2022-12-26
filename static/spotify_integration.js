@@ -5,6 +5,8 @@ const params = new Proxy(new URLSearchParams(window.location.search), {
     get: (searchParams, prop) => searchParams.get(prop),
 });
 
+let songs_added_this_session = [];
+
 function redirect_uri() {
     return location.protocol + '//' + location.host + location.pathname;
 }
@@ -14,11 +16,13 @@ function authorizeSpotify(intention) {
     const scope = "playlist-modify-private playlist-modify-public playlist-read-private";
     const state = Date.now().toFixed();
 
-    document.cookie = "genre=" + selected_genre + ";"
-    document.cookie = "start_year=" + start_year.value + ";"
-    document.cookie = "end_year=" + end_year.value + ";"
-    document.cookie = "remix=" + remix.checked + ";";
-    document.cookie = "live=" + live.checked + ";";
+    document.cookie = "search_state=" + JSON.stringify({
+        "genre": selected_genre,
+        "start_year": start_year.value,
+        "end_year": end_year.value,
+        "remix": remix.checked,
+        "live": remix.checked
+    });
 
     document.cookie = "intention=" + intention;
     document.cookie = "song_state=" + JSON.stringify({
@@ -71,7 +75,6 @@ async function assureAuth(intention) {
 
         window.history.replaceState(null, "", redirect_uri() + "?" + loc_params.toString())
     } else {
-        // TODO: somehow save current state
         authorizeSpotify(intention);
     }
 }
@@ -192,6 +195,18 @@ async function getFavouritePlaylist() {
     return id;
 }
 
+function updateFavButton(id) {
+    if (songs_added_this_session.includes(id) ) {
+        fav.src = "/static/playlist_added.png"
+        fav.classList.add("playlist_active");
+        fav.onclick = () => removeFromFav()
+    } else {
+        fav.src = "/static/playlist.png"
+        fav.classList.removeAll("playlist_active");
+        fav.onclick = () => addToFav()
+    }
+}
+
 async function addToFav() {
     let current_song;
     if (random_songs.isBack) current_song = random_songs.minus_one; else current_song = random_songs.current;
@@ -204,32 +219,49 @@ async function addToFav() {
         method: "POST", headers: {
             "Authorization": "Bearer " + context["access_token"]
         }, body: JSON.stringify(["spotify:track:" + id])
-    })
+    });
+
+    songs_added_this_session.push(id);
+    updateFavButton(id);
 }
 
+async function removeFromFav() {
+    let current_song;
+    if (random_songs.isBack) current_song = random_songs.minus_one; else current_song = random_songs.current;
+
+    const id = current_song["id"];
+    const playlist_id = await getFavouritePlaylist();
+    const context = await assureAuth("favourite_removal");
+
+    await fetch("https://api.spotify.com/v1/playlists/" + playlist_id + "/tracks", {
+        method: "DELETE", headers: {
+            "Authorization": "Bearer " + context["access_token"]
+        }, body: JSON.stringify({"tracks": [{"uri": "spotify:track:" + id}]})
+    });
+
+    songs_added_this_session = songs_added_this_session.filter(value => value !== id);
+    updateFavButton(id);
+}
 
 if (params.code !== null) {
-    assureAuth("code").then(
-        value => {
-            const action = getCookie("intention");
-            deleteCookie("intention");
-            if (action === "playlist") {
-                spotify.hidden = true;
-                createPlaylist().then();
-            } else if (action === "favourite") {
-                // load from state
-                const state = JSON.parse(getCookie("song_state"));
+    assureAuth("code").then(() => {
+        const action = getCookie("intention");
+        deleteCookie("intention");
+        if (action === "playlist") {
+            spotify.hidden = true;
+            createPlaylist().then();
+        } else if (action === "favourite") {
+            // load from state
+            const state = JSON.parse(getCookie("song_state"));
 
-                random_songs.current = state["current"]
-                random_songs.minus_one = state["minus_one"]
+            random_songs.current = state["current"]
+            random_songs.minus_one = state["minus_one"]
 
-                deleteCookie("song_state");
-                display_song(random_songs.current);
+            deleteCookie("song_state");
+            display_song(random_songs.current);
 
-                addToFav().then();
-            }
+            addToFav().then();
         }
-    );
-} else
-    dice(true)
+    });
+} else dice(true)
 
