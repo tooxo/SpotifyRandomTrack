@@ -294,11 +294,13 @@ audio.addEventListener("pause", () => {
 });
 
 song_art_container.addEventListener("mouseenter", () => {
+    hover_over.style.opacity = "1";
     hover_over.style.zIndex = "2";
 });
 
 song_art_container.addEventListener("mouseleave", () => {
-    hover_over.style.zIndex = "-1";
+    hover_over.style.opacity = "0";
+    hover_over.style.zIndex = "-2";
 });
 
 function checkYearInput() {
