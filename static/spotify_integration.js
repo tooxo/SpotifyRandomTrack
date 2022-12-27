@@ -26,7 +26,7 @@ function authorizeSpotify(intention) {
 
     document.cookie = "intention=" + intention;
     document.cookie = "song_state=" + JSON.stringify({
-        "current": random_songs.current, "minus_one": random_songs.minus_one,
+        "current": random_songs.current, "minus_one": random_songs.minus_one, "backlist": random_songs.backlist
     })
 
     window.location = "https://accounts.spotify.com/authorize?response_type=code" + "&client_id=" + client_id + "&scope=" + scope + "&redirect_uri=" + redirect_uri() + "&state=" + state;
@@ -196,7 +196,7 @@ async function getFavouritePlaylist() {
 }
 
 function updateFavButton(id) {
-    if (songs_added_this_session.includes(id) ) {
+    if (songs_added_this_session.includes(id)) {
         fav.src = "/static/playlist_added.png"
         fav.classList.add("playlist_active");
         fav.onclick = () => removeFromFav()
@@ -256,6 +256,7 @@ if (params.code !== null) {
 
             random_songs.current = state["current"]
             random_songs.minus_one = state["minus_one"]
+            random_songs.backlist = state["backlist"]
 
             deleteCookie("song_state");
             display_song(random_songs.current);
