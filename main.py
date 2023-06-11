@@ -411,7 +411,7 @@ async def index(request: Request):
 
 
 async def run_async():
-    config = uvicorn.Config("main:app", port=int_or_default(os.environ.get("PORT"), 8888), log_level="info")
+    config = uvicorn.Config("main:app", port=(int_or_default(os.environ.get("PORT"), 8888)), log_level="warning")
     server = uvicorn.Server(config)
     await server.serve()
 
