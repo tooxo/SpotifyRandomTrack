@@ -3,5 +3,5 @@ fastapi
 aiofiles
 aiohttp
 jinja2
-uvicorn
+uvicorn==0.20.0
 asyncio-pool
