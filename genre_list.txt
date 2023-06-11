@@ -1,3 +1,4 @@
+all
 random
 pop
 dance pop

@@ -7,20 +7,20 @@ import os
 import random
 import re
 import urllib.parse
-from asyncio import Future
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 import aiohttp
 import api_commons.spotify
 import fastapi
 import uvicorn
+from api_commons.spotify import Album, Track
 from asyncio_pool import AioPool
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
+from fastapi.responses import RedirectResponse
 from fastapi.routing import Mount
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
 
 routes = [
     Mount(
@@ -175,6 +175,8 @@ class SearchSpecification:
     end_year: str
     live: bool
     remix: bool
+    type_: str
+    hipster: bool
 
 
 async def retrieve_random_song(
@@ -193,30 +195,35 @@ async def retrieve_random_song(
 
             r_chars = [random.choice(alphabet) for _ in range(random.randint(1, 4))]
 
-            if specs.genre == "random":
+            if specs.genre == "all" or specs.type_ == "album":
                 query = ""
+            elif specs.genre == "random":
+                query = f"genre:\"{random.choice(all_genres)}\""
             else:
-                query = f"genre:\"{urllib.parse.unquote(specs.genre)}\" "
+                query = f"genre:\"{urllib.parse.unquote(specs.genre)}\""
 
             query = \
-                f"{query}track:\"{'%' if rn > 0 else ''}" \
+                f"{query}{specs.type_}:\"{'%' if rn > 0 else ''}" \
                 f"{'*'.join(r_chars)}" \
                 f"{'%' if rn == 0 else ''}\""
             if specs.start_year != "1900" or specs.end_year != str(datetime.date.today().year):
                 query += " year:" + year
+            if specs.type_ == "album":
+                if specs.hipster:
+                    query += " tag:hipster"
 
             offset = random.randint(0, 1500)
 
             async with session.get(
-                    url=f"https://api.spotify.com/v1/search?type=track&include_external=audio&q="
-                        f"{urllib.parse.quote(query)}&limit=1&offset={offset}"
+                    url=f"https://api.spotify.com/v1/search?type={specs.type_}&include_external=audio&q="
+                        f"{query}&limit=1&offset={offset}"
             ) as req1:
                 if not req1.ok:
                     continue
 
                 req1_parse = await req1.json()
 
-                if len(req1_parse["tracks"]["items"]) > 0:
+                if "tracks" in req1_parse and len(req1_parse["tracks"]["items"]) > 0:
                     print(f"use: no offset {offset}")
 
                     track = req1_parse["tracks"]["items"][0]
@@ -225,7 +232,7 @@ async def retrieve_random_song(
                             specs.live or filter_live(track)):
                         return Song.from_json(track)
 
-                elif req1_parse["tracks"]["total"] > 0:
+                elif "tracks" in req1_parse and req1_parse["tracks"]["total"] > 0:
                     print(f"use: offset {offset}")
                     async with session.get(
                             url=f"https://api.spotify.com/v1/search?type=track&include_external=audio&q="
@@ -242,6 +249,24 @@ async def retrieve_random_song(
                                     and (specs.remix or filter_remix(track)) \
                                     and (specs.live or filter_live(track)):
                                 return Song.from_json(track)
+                elif "albums" in req1_parse and req1_parse["albums"]["total"] > 0:
+                    album = Album.from_api_response(json.dumps(random.choice(req1_parse["albums"]["items"])))
+                    album: Album = await album.complete_async(token=await spotify.get_auth_token_async())
+
+                    rnd: Track = random.choice(album.tracks)
+                    dic = json.loads(
+                        json.dumps(
+                            rnd,
+                            default=lambda o: getattr(o, '__dict__', str(o))
+                        )
+                    )
+                    dic["album"] = {
+                        "images": [
+                            {"url": album.images[0].url}
+                        ]
+                    }
+                    print(dic)
+                    return Song.from_json(dic)
 
 
 @app.get("/genres")
@@ -288,15 +313,16 @@ async def genres(artists: str):
         if n in others_genres_flat:
             result.append(n)
 
-    result += main_response["genres"][:2]
+    result += main_response["genres"]
 
-    return result[:2]
+    return list(set(result))[:2]
 
 
 @app.get("/request_songs")
 async def request_pool(genre: str = "pop", no: int = 5, start_year: str = "1900",
                        end_year: str = str(datetime.date.today().year), live: bool = True, remix: bool = True):
-    spec = SearchSpecification(genre=genre, start_year=start_year, end_year=end_year, live=live, remix=remix)
+    spec = SearchSpecification(genre=genre, start_year=start_year, end_year=end_year, live=live, remix=remix,
+                               type_="track", hipster=False)
     spec_list = [spec for _ in range(no)]
 
     global worker_pool
@@ -309,7 +335,7 @@ async def request_pool(genre: str = "pop", no: int = 5, start_year: str = "1900"
 
     return list(
         filter(
-            lambda x: x is not None,
+            lambda x: x is not None and x != {},
             results
         )
     )
@@ -385,7 +411,7 @@ async def index(request: Request):
 
 
 async def run_async():
-    config = uvicorn.Config("main:app", port=os.environ.get("PORT") or 8888, log_level="info")
+    config = uvicorn.Config("main:app", port=int_or_default(os.environ.get("PORT"), 8888), log_level="info")
     server = uvicorn.Server(config)
     await server.serve()
 

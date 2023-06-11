@@ -248,3 +248,12 @@ button {
     text-decoration: none;
     color: black;
 }
+
+#genres a + a:before {
+    content: ", ";
+}
+
+#genres > a:link {
+    color: white;
+    text-decoration: none;
+}

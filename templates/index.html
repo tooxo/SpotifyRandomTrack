@@ -59,12 +59,13 @@
                             </div>
                         </div>
                     </div>
-                    <img src="" id="song_art_bottom" class="music-art max-width" width="100%">
-                    <img src="" id="song_art" class="music-art max-width" width="100%">
+                    <img src="" id="song_art_bottom" class="music-art max-width" width="100%"
+                         onload="bottom_image_loaded()">
+                    <img src="" id="song_art" class="music-art max-width" width="100%" onload="top_image_loaded()">
                 </div>
                 <div class="button_row" style="filter: invert();">
                     <div style="flex: 1; padding: .5em; box-sizing: border-box">
-                        <a  href="javascript:back()" id="back" class="hide">
+                        <a href="javascript:back()" id="back" class="hide">
                             <img src="/static/return.png">
                         </a>
                     </div>
@@ -76,11 +77,14 @@
                     <div style="flex: 1; padding: .5em; box-sizing: border-box"></div>
                 </div>
                 <div style="display: flex; justify-content: space-between">
-                    <p>
-                        <span id="artists"></span><br>
-                        <a id="song_url" target="_blank"><span id="song_name"></span></a><br>
-                        <span id="genres"> </span>
-                    </p>
+                    <div>
+                        <p style="margin-bottom: .25rem">
+                            <span id="artists"></span><br>
+                            <a id="song_url" target="_blank"><span id="song_name"></span></a><br>
+                        </p>
+                        <p id="genres" style="margin-top: 0"></p>
+                    </div>
+
 
                     <div style="margin-top: 1em; margin-bottom: 1em; flex-direction: column; margin-left: .5rem">
                         <a href="#">

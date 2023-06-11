@@ -131,6 +131,7 @@ DOMTokenList.prototype.removeAll = function (v) {
     }
 }
 
+
 function display_song(song) {
     const artists = song.artists;
     const song_n = song.name;
@@ -142,15 +143,9 @@ function display_song(song) {
     if (imagePosition === "top") {
         art_image_bottom.src = art;
 
-        art_image.classList.removeAll("opacity-hundred");
-        art_image_bottom.classList.add("opacity-hundred");
-
         imagePosition = "bottom";
     } else {
         art_image.src = art;
-
-        art_image_bottom.classList.removeAll("opacity-hundred");
-        art_image.classList.add("opacity-hundred");
 
         imagePosition = "top";
     }
@@ -166,12 +161,27 @@ function display_song(song) {
 
 const genres = document.getElementById("genres");
 
+
 async function fetchGenres(song) {
     let art = song.artist_ids.join(",")
-    genres.innerText = " "
+    genres.innerHTML = " "
 
     const response = await fetch("/genres?artists=" + art);
-    if (!response.ok) genres.innerText = "error while fetching genres"; else genres.innerText = (await response.json()).join(", ");
+    if (!response.ok) genres.innerText = "error while fetching genres";
+    else {
+        const list = await response.json();
+        for (let str of list) {
+            let span = document.createElement(
+                "a"
+            );
+            span.innerText = str;
+
+            span.href = "javascript:select_genre(\""+str+"\")";
+            genres.appendChild(
+                span
+            );
+        }
+    }
 }
 
 function checkButtonFunc() {
@@ -235,7 +245,9 @@ function filterDropdown() {
     return genre_list.filter(value => advancedIncludes(input.value.trim().toLowerCase(), value.trim().toLowerCase())).filter((_, index) => index < 20);
 }
 
-function clickDropdown(genre) {
+function select_genre(genre) {
+    if (genre === selected_genre)
+        return;
     selected_genre = genre;
     input.value = genre;
     random_songs.clear();
@@ -246,7 +258,7 @@ function createDropdownChild(name) {
     let p = document.createElement('p');
     p.classList.add("drop-item");
     p.innerText = name;
-    p.onclick = () => clickDropdown(name);
+    p.onclick = () => select_genre(name);
 
 
     return p;
@@ -377,8 +389,18 @@ scroll.addEventListener(
 
 art_image.addEventListener("transitionend", ev => {
     if (ev.target.opacity === 0) art_image_bottom.src = ""
-})
+});
 
 art_image_bottom.addEventListener("transitionend", ev => {
     if (ev.target.opacity === 0) art_image.src = ""
-})
+});
+
+function top_image_loaded() {
+    art_image.classList.add("opacity-hundred");
+    art_image_bottom.classList.removeAll("opacity-hundred");
+}
+
+function bottom_image_loaded() {
+    art_image.classList.removeAll("opacity-hundred");
+    art_image_bottom.classList.add("opacity-hundred");
+}
