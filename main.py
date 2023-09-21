@@ -187,6 +187,7 @@ async def get_specific_song(song_id: str) -> Song:
         }
     ) as session:
         for _ in range(2):
+            print(f"Get Specific Song: {song_id}")
             url = f"https://api.spotify.com/v1/tracks/{song_id}"
             async with session.get(url, allow_redirects=True) as req1:
                 if not req1.ok:
@@ -201,7 +202,7 @@ async def get_specific_song(song_id: str) -> Song:
 async def retrieve_random_song(
         specs: SearchSpecification
 ) -> Optional[Song]:
-    alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
     year = specs.start_year + (f'-{specs.end_year}' if specs.start_year != specs.end_year else '')
 
     async with aiohttp.ClientSession(
@@ -212,7 +213,17 @@ async def retrieve_random_song(
         for _ in range(2):
             rn = random.randint(0, 1)
 
-            r_chars = [random.choice(alphabet) for _ in range(random.randint(1, 4))]
+            if all_genres.index(specs.genre) < 10:
+                mx = 5
+            elif all_genres.index(specs.genre) < 50:
+                mx = 4
+            elif all_genres.index(specs.genre) < 150:
+                mx = 3
+            else:
+                mx = 2
+
+
+            r_chars = [random.choice(alphabet) for _ in range(random.randint(1, mx))]
 
             if specs.genre == "all" or specs.type_ == "album":
                 query = ""
@@ -222,22 +233,26 @@ async def retrieve_random_song(
                 query = f"genre:\"{urllib.parse.quote(specs.genre)}\""
 
             query = \
-                f"{query}{specs.type_}:\"{'%' if rn > 0 else ''}" \
+                f"{query}%20{specs.type_}:{'%25' if rn > 0 else ''}" \
                 f"{'*'.join(r_chars)}" \
-                f"{'%' if rn == 0 else ''}\""
+                f"{'%' if rn == 0 else ''}"
             if specs.start_year != "1900" or specs.end_year != str(datetime.date.today().year):
                 query += " year:" + year
             if specs.type_ == "album":
                 if specs.hipster:
                     query += " tag:hipster"
 
-            offset = random.randint(0, 1500)
+            offset = random.randint(0, 1000)
+            url = f"https://api.spotify.com/v1/search?type={specs.type_}&include_external=audio&q={query}&limit=1&offset={offset}"
+
+            print(f"GET: {url}")
+            print(f"TK: {await spotify.get_auth_token_async()}")
 
             async with session.get(
-                    url=f"https://api.spotify.com/v1/search?type={specs.type_}&include_external=audio&q="
-                        f"{query}&limit=1&offset={offset}"
+                    url=url
             ) as req1:
                 if not req1.ok:
+                    print(f"{req1}")
                     continue
 
                 req1_parse = await req1.json()
@@ -257,7 +272,7 @@ async def retrieve_random_song(
                     print(f"use: offset {offset}")
                     async with session.get(
                             url=f"https://api.spotify.com/v1/search?type=track&include_external=audio&q="
-                                f"{urllib.parse.quote(query)}&limit=1"
+                                f"{query}&limit=1"
                                 f"&offset={random.randint(0, req1_parse['tracks']['total'] - 1)}"
                     ) as req2:
                         if not req2.ok:
