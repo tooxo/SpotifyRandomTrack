@@ -147,6 +147,7 @@ class Song:
 
     @staticmethod
     def from_json(x: dict):
+        assert x["preview_url"] is not None
         return Song(
             artists=list(
                 map(
@@ -179,6 +180,24 @@ class SearchSpecification:
     hipster: bool
 
 
+async def get_specific_song(song_id: str) -> Song:
+    async with aiohttp.ClientSession(
+        headers={
+            "Authorization": "Bearer " + (await spotify.get_auth_token_async())
+        }
+    ) as session:
+        for _ in range(2):
+            url = f"https://api.spotify.com/v1/tracks/{song_id}"
+            async with session.get(url, allow_redirects=True) as req1:
+                if not req1.ok:
+                    continue
+                parsed = await req1.json()
+                if not parsed["preview_url"]:
+                    continue
+
+                return Song.from_json(parsed)
+
+
 async def retrieve_random_song(
         specs: SearchSpecification
 ) -> Optional[Song]:
@@ -200,7 +219,7 @@ async def retrieve_random_song(
             elif specs.genre == "random":
                 query = f"genre:\"{random.choice(all_genres)}\""
             else:
-                query = f"genre:\"{urllib.parse.unquote(specs.genre)}\""
+                query = f"genre:\"{urllib.parse.quote(specs.genre)}\""
 
             query = \
                 f"{query}{specs.type_}:\"{'%' if rn > 0 else ''}" \
@@ -230,6 +249,8 @@ async def retrieve_random_song(
 
                     if song_filter(track) and (specs.remix or filter_remix(track)) and (
                             specs.live or filter_live(track)):
+                        if not track["preview_url"]:
+                            return await get_specific_song(track["id"])
                         return Song.from_json(track)
 
                 elif "tracks" in req1_parse and req1_parse["tracks"]["total"] > 0:
@@ -248,6 +269,8 @@ async def retrieve_random_song(
                             if song_filter(track) \
                                     and (specs.remix or filter_remix(track)) \
                                     and (specs.live or filter_live(track)):
+                                if not track["preview_url"]:
+                                    return await get_specific_song(track["id"])
                                 return Song.from_json(track)
                 elif "albums" in req1_parse and req1_parse["albums"]["total"] > 0:
                     album = Album.from_api_response(json.dumps(random.choice(req1_parse["albums"]["items"])))
@@ -266,6 +289,8 @@ async def retrieve_random_song(
                         ]
                     }
                     print(dic)
+                    if not track["preview_url"]:
+                        return await get_specific_song(track["id"])
                     return Song.from_json(dic)
 
 
@@ -315,14 +340,15 @@ async def genres(artists: str):
 
     result += main_response["genres"]
 
-    return list(set(result))[:2]
+    return list(set(result))[:5]
 
 
 @app.get("/request_songs")
 async def request_pool(genre: str = "pop", no: int = 5, start_year: str = "1900",
                        end_year: str = str(datetime.date.today().year), live: bool = True, remix: bool = True):
-    spec = SearchSpecification(genre=genre, start_year=start_year, end_year=end_year, live=live, remix=remix,
+    spec = SearchSpecification(genre=urllib.parse.unquote(genre), start_year=start_year, end_year=end_year, live=live, remix=remix,
                                type_="track", hipster=False)
+    print(spec)
     spec_list = [spec for _ in range(no)]
 
     global worker_pool

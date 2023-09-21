@@ -70,7 +70,8 @@ function PlusOneList() {
 }
 
 function get_selected_genres() {
-    if (genre_list.includes(selected_genre)) return selected_genre;
+    if (genre_list.includes(selected_genre)) return encodeURIComponent(selected_genre);
+
     return 'pop';
 }
 
