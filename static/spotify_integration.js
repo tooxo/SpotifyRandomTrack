@@ -84,7 +84,7 @@ async function createPlaylist() {
     spotify.disabled = true;
     const try_num = 50;
 
-    const context = assureAuth("playlist");
+    const context = await assureAuth("playlist");
 
     let r = (Math.random() + 1).toString(36).substring(7);
 
