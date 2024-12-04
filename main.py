@@ -191,6 +191,7 @@ async def get_specific_song(song_id: str) -> Song:
             url = f"https://api.spotify.com/v1/tracks/{song_id}"
             async with session.get(url, allow_redirects=True) as req1:
                 if not req1.ok:
+                    print(await req1.text())
                     continue
                 parsed = await req1.json()
                 if not parsed["preview_url"]:
