@@ -195,6 +195,7 @@ async def get_specific_song(song_id: str) -> Song:
                     continue
                 parsed = await req1.json()
                 if not parsed["preview_url"]:
+                    print(parsed)
                     continue
 
                 return Song.from_json(parsed)
