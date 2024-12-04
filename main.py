@@ -233,7 +233,7 @@ async def retrieve_random_song(
                 query = f"genre:\"{urllib.parse.quote(specs.genre)}\""
 
             query = \
-                f"{query}%25{specs.type_}:{'%25' if rn > 0 else ''}" \
+                f"{query} {specs.type_}:{'%25' if rn > 0 else ''}" \
                 f"{'*'.join(r_chars)}" \
                 f"{'%' if rn == 0 else ''}"
             if specs.start_year != "1900" or specs.end_year != str(datetime.date.today().year):
