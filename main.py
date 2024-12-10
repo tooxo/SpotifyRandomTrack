@@ -179,7 +179,7 @@ class SearchSpecification:
     type_: str
     hipster: bool
 
-async def fill_preview_url(song: dict) -> Song | None:
+async def fill_preview_url(song: dict) -> Optional[Song]:
     if song.get("preview_url") is not None:
         return Song.from_json(song)
 
