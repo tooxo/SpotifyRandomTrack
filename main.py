@@ -179,27 +179,28 @@ class SearchSpecification:
     type_: str
     hipster: bool
 
+async def fill_preview_url(song: dict) -> Song | None:
+    if song.get("preview_url") is not None:
+        return Song.from_json(song)
 
-async def get_specific_song(song_id: str) -> Song:
-    async with aiohttp.ClientSession(
-        headers={
-            "Authorization": "Bearer " + (await spotify.get_auth_token_async())
-        }
-    ) as session:
-        for _ in range(2):
-            print(f"Get Specific Song: {song_id}")
-            url = f"https://api.spotify.com/v1/tracks/{song_id}"
-            async with session.get(url, allow_redirects=True) as req1:
-                if not req1.ok:
-                    print(await req1.text())
-                    continue
-                parsed = await req1.json()
-                if not parsed["preview_url"]:
-                    print(parsed)
-                    continue
+    async with aiohttp.ClientSession() as session:
+        url = f"https://open.spotify.com/embed/track/{song['id']}"
+        async with session.get(url, allow_redirects=True) as req:
+            if not req.ok:
+                print(await req.text())
+                return None
+            text = await req.text()
+            # https://p.scdn.co/mp3-preview/d87c1a1355b237404ea0898873c7eb583ec4a7cf
+            match = re.search(
+                r"(https://p.scdn.co/mp3-preview/[a-z0-9]+)",
+                text
+            )
+            if not match:
+                print("no match", text)
+                return None
 
-                return Song.from_json(parsed)
-
+            song["preview_url"] = match.group()
+            return Song.from_json(song)
 
 async def retrieve_random_song(
         specs: SearchSpecification
@@ -223,7 +224,6 @@ async def retrieve_random_song(
                 mx = 3
             else:
                 mx = 2
-
 
             r_chars = [random.choice(alphabet) for _ in range(random.randint(1, mx))]
 
@@ -267,7 +267,7 @@ async def retrieve_random_song(
                     if song_filter(track) and (specs.remix or filter_remix(track)) and (
                             specs.live or filter_live(track)):
                         if not track["preview_url"]:
-                            return await get_specific_song(track["id"])
+                            return await fill_preview_url(track)
                         return Song.from_json(track)
 
                 elif "tracks" in req1_parse and req1_parse["tracks"]["total"] > 0:
@@ -287,7 +287,7 @@ async def retrieve_random_song(
                                     and (specs.remix or filter_remix(track)) \
                                     and (specs.live or filter_live(track)):
                                 if not track["preview_url"]:
-                                    return await get_specific_song(track["id"])
+                                    return await fill_preview_url(track)
                                 return Song.from_json(track)
                 elif "albums" in req1_parse and req1_parse["albums"]["total"] > 0:
                     album = Album.from_api_response(json.dumps(random.choice(req1_parse["albums"]["items"])))
@@ -307,7 +307,7 @@ async def retrieve_random_song(
                     }
                     print(dic)
                     if not track["preview_url"]:
-                        return await get_specific_song(track["id"])
+                        return await fill_preview_url(track)
                     return Song.from_json(dic)
 
 
@@ -363,7 +363,8 @@ async def genres(artists: str):
 @app.get("/request_songs")
 async def request_pool(genre: str = "pop", no: int = 5, start_year: str = "1900",
                        end_year: str = str(datetime.date.today().year), live: bool = True, remix: bool = True):
-    spec = SearchSpecification(genre=urllib.parse.unquote(genre), start_year=start_year, end_year=end_year, live=live, remix=remix,
+    spec = SearchSpecification(genre=urllib.parse.unquote(genre), start_year=start_year, end_year=end_year, live=live,
+                               remix=remix,
                                type_="track", hipster=False)
     print(spec)
     spec_list = [spec for _ in range(no)]
@@ -454,7 +455,8 @@ async def index(request: Request):
 
 
 async def run_async():
-    config = uvicorn.Config("main:app", host="0.0.0.0", port=(int_or_default(os.environ.get("PORT"), 8888)), log_level="info")
+    config = uvicorn.Config("main:app", host="0.0.0.0", port=(int_or_default(os.environ.get("PORT"), 8888)),
+                            log_level="info")
     server = uvicorn.Server(config)
     await server.serve()
 
